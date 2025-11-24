@@ -4,8 +4,10 @@ use wasabi_wasm::Code;
 use wasabi_wasm::FunctionType;
 use wasabi_wasm::ImportOrPresent;
 use wasabi_wasm::Module;
+use wasabi_wasm::Mutability;
 use wasabi_wasm::ValType;
-
+use wasabi_wasm::Val;
+use wasabi_wasm::Instr;
 use crate::compiler::{LibGeneratable, Library};
 use wasabi_wasm::Function;
 use wasabi_wasm::Idx;
@@ -124,6 +126,10 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     let (mut module, _offsets, _issue) =
         Module::from_bytes(module).map_err(InstrumentationError::ParseModuleError)?;
 
+    let function_count = module.functions().count();
+
+    let instrumentation = module.add_global(ValType::I32, Mutability::Mut, vec![Instr::Const(Val::I32(0)), Instr::End]);
+
     let target_indices_including_imports: HashSet<Idx<Function>> = module
         .functions()
         .filter(|(_index, f)| !uses_reference_types(f))
@@ -160,7 +166,31 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
                 .map_err(|e| InstrumentationError::LowToHighError { low_to_high_err: e })
         })
         .collect::<Result<Vec<HighLevelBody>, InstrumentationError>>()?;
+    
+    // If there are globals before program ?
+    let global_offset = module.globals().count();
 
+    // Create table to store function pointers
+    //let modifying_table = module.table_mut(0);
+
+    // Duplicate the original function bodies to save their state before any transformation
+    // instrumented function will have index i and uninstrumented function will have index i + function_count
+    for (target_function_idx, target_high_level_body) in target_indices.iter().zip(target_high_level_functions.clone()) {
+        let LowLevelBody(target_low_level_body) = target_high_level_body.into();
+        let locals = module
+            .function(*target_function_idx)
+            .code()
+            .ok_or(InstrumentationError::AttemptInnerInstrumentImport)?
+            .locals
+            .clone().iter().map(|l| l.type_.clone()).collect::<Vec<ValType>>();
+        let ftype = module.function(*target_function_idx).type_.clone(); 
+        module.add_function(ftype, locals, target_low_level_body.clone());
+
+        let global_index = module.add_global(ValType::I32, Mutability::Mut, vec![Instr::Const(Val::I32(0)), Instr::End]);
+
+    }
+    
+    
     //  Install all tarps
     type TFn = fn(Idx<Function>) -> Box<dyn TransformationStrategy>;
     let traps_target_generators = [

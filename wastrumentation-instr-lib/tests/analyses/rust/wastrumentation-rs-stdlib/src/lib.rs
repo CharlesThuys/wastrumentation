@@ -613,6 +613,7 @@ pub enum GlobalOp {
     Set,
 }
 
+
 #[macro_export]
 macro_rules! advice {
     (call pre

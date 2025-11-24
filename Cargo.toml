@@ -8,7 +8,7 @@ members = [
     "wasm-merge",
     "cli",
     "wastrumentation-static-analysis",
-    "supported-languages/*",
+    "supported-languages/*", "transform",
 ]
 
 [workspace.dependencies]

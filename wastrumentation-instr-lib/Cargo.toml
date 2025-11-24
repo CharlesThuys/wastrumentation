@@ -20,3 +20,7 @@ wasmtime-wasi = "37.0"
 wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
 wastrumentation-lang-rust = { workspace = true }
 wastrumentation-lang-assemblyscript = { workspace = true }
+
+[dependencies]
+io = "0.0.2"
+libc = "0.2.177"

@@ -108,6 +108,7 @@ where
             .analysis_language_compiler
             .compile(&analysis_compiler_options)
             .map_err(Error::CompilationErrorAnalysis)?;
+
         // 2. Instrument the input program
         let Instrumented {
             module: instrumented_input,
@@ -118,6 +119,7 @@ where
             target_indices,
         )
         .map_err(Error::InstrumentationError)?;
+    
         // 3. Compile the instrumentation lib
         let compiled_instrumentation_lib = if let Some(library) = instrumentation_library {
             let instrumentation_compiler_options =

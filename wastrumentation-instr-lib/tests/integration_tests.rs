@@ -22,6 +22,9 @@ mod wasmtime_macros;
 mod integration_util;
 use integration_util::*;
 
+use wat::parse_str as wat2wasm;
+use wat::parse_bytes as wasm2wat;  
+
 const TAINT_INPUT_SOURCE: &str = r#"
 static mut GLOBAL_COUNT_TWO: i32 = 0;
 
@@ -661,4 +664,108 @@ fn test_analysis_logging() {
     );
 
     assert_eq!(wasm_call!(store, f, 0), 12345);
+}
+
+#[test]
+fn test_analysis_mylogger() {
+
+    //////////////////////////
+    // COMPILE & INSTRUMENT //
+    //////////////////////////
+    
+    let analysis_compiler = Compiler::setup_compiler().expect("Setup Rust compiler");
+    let instrumentation_compiler = Compiler::setup_compiler().expect("Setup Rust compiler");
+    
+    let input_program = wat2wasm(
+    r#"(module
+            (type $0 (func (param i32 i32) (result i32)))
+            (export "add" (func $module/add))
+            (func $module/add (param $0 i32) (param $1 i32) (result i32)
+                local.get $0
+                local.get $1
+                i32.add
+            )
+            (export "mul" (func $module/mul))
+            (func $module/mul (param $0 i32) (param $1 i32) (result i32)
+                local.get $0
+                local.get $1
+                i32.mul
+            )
+        )"#,
+    )
+    .unwrap();
+
+    let source = Manifest(
+        rust_to_wasm_compiler::WasiSupport::Enabled,
+        absolute("./tests/analyses/rust/my-logger/Cargo.toml").unwrap(),
+    );
+
+    let hooks = vec![Hook::Binary, Hook::Unary].into_iter().collect();
+    let analysis = RustAnalysisSpec { source, hooks }.into();
+
+    let configuration = Configuration {
+        target_indices: None,
+        primary_selection: Some(PrimaryTarget::Analysis),
+    };
+
+    let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
+    let wastrumented = wastrumenter
+        .wastrument(&input_program, analysis, &configuration)
+        .expect("Wastrumentation should succeed");
+
+    /////////////////////
+    // WASMTIME ENGINE //
+    ///////////////////// 
+
+    let stdout = wasmtime_wasi::p2::pipe::MemoryOutputPipe::new(usize::MAX);
+    let stderr = wasmtime_wasi::p2::pipe::MemoryOutputPipe::new(usize::MAX);
+
+    // Construct the wasm engine
+    let engine = Engine::default();
+
+    // Add the WASI preview1 API to the linker (will be implemented in terms of the preview2 API)
+    let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
+    preview1::add_to_linker_sync(&mut linker, |t| t).unwrap();
+
+    // Add capabilities (e.g. filesystem access) to the WASI preview2 context here.
+    // Here only stdio is inherited, but see docs of `WasiCtxBuilder` for more.
+    let wasi_ctx = WasiCtxBuilder::new()
+        .stdout(stdout.clone())
+        .stderr(stderr.clone())
+        .build_p1();
+
+    let mut store = Store::new(&engine, wasi_ctx);
+
+    // Note: This is a module built against the preview1 WASI API.
+    let module = Module::from_binary(&engine, &wastrumented).unwrap();
+
+    linker.module(&mut store, "main", &module).unwrap();
+
+    // Get & invoke function
+    declare_fns_from_linker! {linker, store, "main", add [i32, i32] [i32]}
+    declare_fns_from_linker! {linker, store, "main", mul [i32, i32] [i32]}
+
+    const EXPECTED_ANALYSIS_STDOUT: &str = indoc::indoc! { r#"
+    [MYLOGGER:] binary generic I32Add I32(
+        0,
+    ) I32(
+        0,
+    ), location: Location { instr_index: 0, funct_index: 2 }
+    [MYLOGGER:] binary generic I32Add I32(
+        5,
+    ) I32(
+        6,
+    ), location: Location { instr_index: 0, funct_index: 2 }
+    "# };
+
+    assert_eq!(wasm_call!(store, add, (0, 0)), 0);
+
+    assert_eq!(wasm_call!(store, add, (5, 6)), 11);
+
+    assert_eq!(
+        EXPECTED_ANALYSIS_STDOUT,
+        String::from_utf8_lossy(&stdout.contents())
+    );
+
+    assert_eq!(wasm_call!(store, mul, (8, 3)), 24);
 }
