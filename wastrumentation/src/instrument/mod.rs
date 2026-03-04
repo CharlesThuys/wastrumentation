@@ -185,9 +185,6 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             .clone().iter().map(|l| l.type_.clone()).collect::<Vec<ValType>>();
         let ftype = module.function(*target_function_idx).type_.clone(); 
         module.add_function(ftype, locals, target_low_level_body.clone());
-
-        let global_index = module.add_global(ValType::I32, Mutability::Mut, vec![Instr::Const(Val::I32(0)), Instr::End]);
-
     }
     
     

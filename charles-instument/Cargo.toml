@@ -1,0 +1,26 @@
+[package]
+name = "charles-instument"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rust-to-wasm-compiler = { workspace = true }
+wasp-compiler = { workspace = true }
+wastrumentation = { workspace = true }
+tempfile = { workspace = true }
+bitmask = "0.5.0"
+indoc = { workspace = true }
+asc-compiler-rs = { workspace = true }
+wasmtime = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wat = { workspace = true }
+wasmtime-wasi = "37.0"
+wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
+wastrumentation-lang-rust = { workspace = true }
+wastrumentation-lang-assemblyscript = { workspace = true }
+io = "0.0.2"
+libc = "0.2.177"
+wasabi_wasm = { git = "https://github.com/aaronmunsters/wasabi.git", rev = "ee2fb70" }
+thiserror = { workspace = true }
