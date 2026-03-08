@@ -129,7 +129,7 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
             f_new.code().unwrap().locals.iter().map(| local| local.type_).collect(),
             f_new.code().unwrap().body.iter().map(| instr| 
                 match instr {
-                    Binary(BinaryOp::I32Add) => { Binary(BinaryOp::I32Sub) }
+                    Binary(BinaryOp::I32Add) => { Binary(BinaryOp::I32Add) }
                     _ => { instr.clone() }
                     }).collect()));
         }
