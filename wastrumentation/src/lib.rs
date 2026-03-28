@@ -8,7 +8,7 @@ pub mod wasm_constructs;
 
 use std::fmt::Debug;
 use std::marker::PhantomData;
-
+use wasmparser;
 use crate::instrument::Instrumented;
 use analysis::ProcessedAnalysis;
 use compiler::{Compiles, DefaultCompilerOptions, LibGeneratable, SourceCodeBound, WasmModule};
@@ -132,6 +132,9 @@ where
         } else {
             None
         };
+
+        wasmparser::validate(&instrumented_input).expect("instrument input ok");
+        wasmparser::validate(&analysis_wasm).expect("analysis wasm ok");
 
         // 4. Merge them all together
         let instrumented_input = Self::merge(

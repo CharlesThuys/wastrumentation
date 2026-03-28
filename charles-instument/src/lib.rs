@@ -4,7 +4,7 @@ use std::path::absolute;
 use indoc::formatdoc;
 // Wastrumentation imports
 use rust_to_wasm_compiler::{Profile, WasiSupport};
-
+use std::collections::HashMap;
 
 use wastrumentation::{compiler::Compiles, Configuration, PrimaryTarget, Wastrumenter};
 use wastrumentation_lang_assemblyscript::compile::compiler::Compiler as ASCompiler;
@@ -27,7 +27,7 @@ use integration_util::*;
 //use wat::parse_str as wat2wasm;
 //use wat::parse_bytes as wasm2wat;  
 
-use wasabi_wasm::{Element, GlobalType};
+use wasabi_wasm::{Element, GlobalType, LoadOp, Local, LocalOp, Memarg, Memory, StoreOp};
 use wasabi_wasm::FunctionType;
 use wasabi_wasm::ImportOrPresent;
 use wasabi_wasm::Module as M2;
@@ -44,7 +44,9 @@ use wasabi_wasm::Table;
 use wasabi_wasm::Function;
 use wasabi_wasm::GlobalOp;
 use wasabi_wasm::BinaryOp;
-use wasabi_wasm::Instr::{Call, CallIndirect, Const, End, Local, RefFunc, Global, Binary};
+use wasabi_wasm::Instr::{Call, CallIndirect, Const, End, RefFunc, Global, Binary};
+use wasabi_wasm::DataMode;
+use wasabi_wasm::Data;
 use wastrumentation::error::InstrumentationError;
 
 
@@ -119,46 +121,54 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
 
     let (mut module, _offsets, _issue) = M2::from_bytes(&wat_input_program).map_err(InstrumentationError::ParseModuleError)?;
     
-    let mut additional_functions = Vec::new();
+    // Create HashMap <Original index , New index>
+    let mut additional_functions = HashMap::new();
 
-    // Duplicate f
-    module.functions().for_each(|(index, f)| {  
-        if f.export.contains(&"f".to_owned()) {
-            let f_new = f.clone();
-            additional_functions.push((index, f_new.type_, 
-            f_new.code().unwrap().locals.iter().map(| local| local.type_).collect(),
-            f_new.code().unwrap().body.iter().map(| instr| 
+    // Get the amount of functions
+    let original_function_count = module.functions.len();
+
+    // Get the indexes
+    let original_idxs: Vec<Idx<Function>> = module.functions().map(|(idx , _f)| idx ).collect();
+
+    // Copy the f function and change Add to Sub Instruction
+    for f_idx in original_idxs.clone() {
+        println!("function index: {}", f_idx.to_u32());
+        let original_function = module.function(f_idx);
+        if original_function.export.contains(&"f".to_string()) {
+            let new_function = original_function.clone();
+            let f_type = new_function.type_;
+            let f_code = new_function.code().unwrap();
+            let f_locals = f_code.locals.iter().map(| local| local.type_).collect();
+            let f_body = f_code.body.iter().map(| instr| 
                 match instr {
-                    Binary(BinaryOp::I32Add) => { Binary(BinaryOp::I32Add) }
+                    Binary(BinaryOp::I32Add) => { Binary(BinaryOp::I32Sub) }
                     _ => { instr.clone() }
-                    }).collect()));
+                }).collect();
+            let new_idx = module.add_function(f_type, f_locals, f_body);
+            additional_functions.insert(f_idx, new_idx);
+        } else {
+            additional_functions.insert(f_idx, f_idx);
         }
-    });
-
-    let mut new_idxs = Vec::new();
-    
-    // Create pairs of original and new funciton idexes
-    for (index, type_, locals, body) in additional_functions {
-        let new_index = module.add_function(type_, locals, body);
-        new_idxs.push((index, new_index));
     }
 
+    // Generate new table
     let table_idx = module.tables.len();
 
     module.tables.push(Table {
         limits: Limits {
-            initial_size: new_idxs.len() as u32  * 2,
-            max_size: Some(new_idxs.len() as u32 * 2),
+            initial_size: (original_function_count * 2) as u32,
+            max_size: None,
         },
         import: None,
         ref_type: RefType::FuncRef,
         export: vec![],
     });
 
-    let table_funs_refs: Vec<Vec<Instr>> = new_idxs
-        .into_iter()
-        .flat_map(|(idx, new_idx)| [vec![RefFunc(idx), End], vec![RefFunc(new_idx), End]])
-        .collect();
+    let table_funs_refs: Vec<Vec<Instr>> = original_idxs
+        .into_iter().flat_map(|idx| {
+            let instr_idx = *additional_functions.get(&idx).or(Some(&idx)).unwrap();
+            return [vec![RefFunc(idx), End], vec![RefFunc(instr_idx), End]];
+        } ).collect();
 
     module.elements.push(Element {
         typ: RefType::FuncRef,
@@ -171,6 +181,38 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
 
     let global_index = module.add_global(ValType::I32, Mutability::Mut, vec![Instr::Const(Val::I32(0)), Instr::End]);
 
+    println!("memory: {:?}", module.memories);
+
+
+    println!("data: {:?}", module.datas);
+    
+    if module.memories.is_empty() {
+        let memory = Memory::new(Limits { initial_size: original_function_count as u32, max_size: None});
+        let mem_idx = Idx::<Memory>::from(module.memories.len());
+
+        module.memories.push(memory);
+
+        module.datas.push(Data {
+            init: vec![1; original_function_count],
+            mode: DataMode::Active { memory: mem_idx, offset: vec![Const(Val::I32(0)), End], },
+        });
+    } else {
+        let (mem_idx,  memory) = module.memories().last().unwrap();
+        let mut new_memory = memory.clone();
+        new_memory.limits = Limits { initial_size: memory.limits.initial_size + (original_function_count as u32), max_size: None };
+        module.memories[0] = new_memory;
+
+        module.datas.push(Data {
+            init: vec![1; original_function_count],
+            mode: DataMode::Active { memory: mem_idx, offset: vec![Const(Val::I32(0)), End], },
+        });
+        // TODO: Expand memory size
+    }
+
+    println!("memory: {:?}", module.memories);
+   
+    println!("data: {:?}", module.datas);
+
     // Try to modify main
     module.functions_mut().for_each(|(_index, f)| {  
         if f.export.contains(&"g".to_owned()) {
@@ -178,17 +220,34 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
             let mut new_body = Vec::new();
             for instr in mut_code.body.iter() {
                 match instr {
-                    Call(_index) => {
-                        // Replace call with call_indirect
-                        new_body.push(Global(GlobalOp::Get, global_index.into()));
-                        new_body.push(Const(Val::I32(1)));
-                        new_body.push(Binary(BinaryOp::I32Xor));
-                        new_body.push(Global(GlobalOp::Set, global_index.into()));
-                        new_body.push(Global(GlobalOp::Get, global_index.into()));
+                    Call(index) => {
+                        // BASE IDX IN TABLE
+                        new_body.push(Const(Val::I32(index.to_u32() as i32 * 2)));
+                        // FLAG MEMORY INDEX
+                        new_body.push(Const(Val::I32(index.to_u32() as i32)));
+                        // LOAD FLAG VALUE
+                        new_body.push(Instr::Load(LoadOp::I32Load8U, Memarg::default(LoadOp::I32Load8U)));
+                        // ADD FLAG TO BASE IDX
+                        new_body.push(Binary(BinaryOp::I32Add));
+                        // CALL INDIRECT FROM TABLE
                         new_body.push(CallIndirect(
                             FunctionType::new(&[ValType::I32, ValType::I32], &[ValType::I32]),
                             table_idx.into(),
                         ));
+
+                        // Perform XOR operation to toggle between the functions
+                        // BASE IDX IN TABLE
+                        new_body.push(Const(Val::I32(index.to_u32() as i32 * 2)));
+                        // BASE IDX IN TABLE
+                        new_body.push(Const(Val::I32(index.to_u32() as i32 * 2)));
+                        // LOAD FLAG VALUE
+                        new_body.push(Instr::Load(LoadOp::I32Load8U, Memarg::default(LoadOp::I32Load8U)));
+                        // PERFORM BITWISE OPERATION
+                        new_body.push(Const(Val::I32(1)));
+                        new_body.push(Binary(BinaryOp::I32Xor));
+                        // STORE THE VALUE BACK
+                        new_body.push(Instr::Store(StoreOp::I32Store8, Memarg::default(StoreOp::I32Store8)));
+                        
                         continue;
                     }
                     _ => {
@@ -197,21 +256,15 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
                 }
             }
 
-            for inst in new_body.iter() {
-                println!("{:?}", inst);
-            }
-
             mut_code.body = new_body;
             // f.code_mut().unwrap().body = new_body;
         }
     });
 
-        
     
-
     let instrumented_program = module.to_bytes().unwrap();
 
-    module.to_file("instrumented.wasm");
+    let _ = module.to_file("instrumented.wasm");
 
     println!("module after instrumentation:");
 
@@ -244,7 +297,7 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
     declare_fns_from_linker! {linker, store, "main", g [] [i32]}
 
 
-    assert_eq!(wasm_call!(store, g, ()), 1000);
+    assert_eq!(wasm_call!(store, g, ()), 500);
 
 
     // let instrument_f: () = module.globals.push(wasabi_wasm::Global::new(GlobalType(ValType::I32, Mutability::Mut), vec![Const(Val::I32(0))])); 

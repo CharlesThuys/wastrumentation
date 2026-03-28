@@ -126,10 +126,6 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     let (mut module, _offsets, _issue) =
         Module::from_bytes(module).map_err(InstrumentationError::ParseModuleError)?;
 
-    let function_count = module.functions().count();
-
-    let instrumentation = module.add_global(ValType::I32, Mutability::Mut, vec![Instr::Const(Val::I32(0)), Instr::End]);
-
     let target_indices_including_imports: HashSet<Idx<Function>> = module
         .functions()
         .filter(|(_index, f)| !uses_reference_types(f))
@@ -167,12 +163,6 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         })
         .collect::<Result<Vec<HighLevelBody>, InstrumentationError>>()?;
     
-    // If there are globals before program ?
-    let global_offset = module.globals().count();
-
-    // Create table to store function pointers
-    //let modifying_table = module.table_mut(0);
-
     // Duplicate the original function bodies to save their state before any transformation
     // instrumented function will have index i and uninstrumented function will have index i + function_count
     for (target_function_idx, target_high_level_body) in target_indices.iter().zip(target_high_level_functions.clone()) {
@@ -304,12 +294,13 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     let instrumentation_library =
         generic_interface
             .as_ref()
-            .map(|(generic_import, generic_export)| {
+            .map(|(generic_import, generic_export, switch_instr_flag_export )| {
                 function_application::instrument::<InstrumentationLanguage>(
                     &mut module,
                     &target_indices_including_imports,
                     generic_import,
                     generic_export,
+                    switch_instr_flag_export
                 )
             });
 

@@ -10,6 +10,7 @@ wasabi_wasm = { git = "https://github.com/aaronmunsters/wasabi.git", rev = "ee2f
 wasm-merge = { workspace = true }
 indoc = { workspace = true }
 thiserror = { workspace = true }
+wasmparser = "0.245.1"
 
 [dev-dependencies]
 wasmtime = { workspace = true }

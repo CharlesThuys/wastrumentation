@@ -384,7 +384,9 @@ pub fn inject_memory_loads(module: &mut Module) {
         I64Load8U,
     };
 
-    assert!(module.memories.len() <= 1);
+    println!("Memories at inject memory laods: {:?}", module.memories);
+    // 2 for base memory + flag_memory
+    assert!(module.memories.len() <= 2);
 
     for (name, load_op, load_type) in [
         // Regular
@@ -442,7 +444,8 @@ pub fn inject_memory_stores(module: &mut Module) {
     use wasabi_wasm::StoreOp::{I32Store16, I32Store8}; // I32 Specialized
     use wasabi_wasm::StoreOp::{I64Store16, I64Store32, I64Store8}; // I64 Specialized
 
-    assert!(module.memories.len() <= 1);
+    println!("Memories at inject memory stores: {:?}", module.memories);
+    assert!(module.memories.len() <= 2);
 
     for (name, store_op, store_type) in [
         // Regular
@@ -488,7 +491,9 @@ pub fn inject_memory_stores(module: &mut Module) {
 
 pub fn inject_memory_grow(module: &mut Module) {
     use wasabi_wasm::Instr::{Const, End, Local, MemoryGrow};
-    assert!(module.memories.len() <= 1);
+
+    println!("Memories at inject memory grows: {:?}", module.memories);
+    assert!(module.memories.len() <= 2);
 
     let function_type = FunctionType::new(&[ValType::I32, ValType::I32], &[ValType::I32]);
     let body = if module.memories.is_empty() {
@@ -518,12 +523,14 @@ pub fn inject_memory_grow(module: &mut Module) {
 
 pub fn inject_memory_size(module: &mut Module) {
     use wasabi_wasm::Instr::{Const, End, MemorySize};
-    assert!(module.memories.len() <= 1);
+
+    println!("Memories at inject memory size: {:?}", module.memories);
+    assert!(module.memories.len() <= 2);
 
     let function_type = FunctionType::new(&[ValType::I32], &[ValType::I32]);
     let body = if module.memories.is_empty() {
         vec![
-            // []
+            // []()
             Const(Val::I32(0)),
             // [value]
             End,

@@ -34,6 +34,8 @@ fn panic(_panic: &core::panic::PanicInfo<'_>) -> ! {
 extern "C" {
     // Base apply
     fn call_base(f_apply: i32, sigv: i32);
+    // Switch global instrumentation flag
+    fn set_instr_flag(f_index: i32, flag_value: i32);
     // Base load
     fn instrumented_base_load_i32(ptr: i32, offset: i32) -> i32;
     fn instrumented_base_load_i64(ptr: i32, offset: i32) -> i64;
@@ -322,7 +324,7 @@ pub struct WasmFunction {
     pub f_apply: i32,
     pub instr_f_idx: i32,
     pub sigv: i32,
-    pub code_present_serialized: i32,
+    pub code_present_serialized: i32
 }
 
 #[cfg(feature = "std")]
@@ -352,7 +354,7 @@ impl WasmFunction {
             f_apply,
             instr_f_idx,
             sigv,
-            code_present_serialized,
+            code_present_serialized
         }
     }
 
@@ -370,6 +372,10 @@ impl WasmFunction {
 
     pub fn is_present(&self) -> bool {
         self.code_present_serialized == CODE_IS_PRESENT
+    }
+
+    pub fn turn_off(&self) {
+        unsafe { set_instr_flag(self.f_apply, 0) }
     }
 }
 
@@ -707,7 +713,7 @@ macro_rules! advice {
             resc: i32,
             sigv: i32,
             sigtypv: i32,
-            code_present_serialized: i32,
+            code_present_serialized: i32
         ) {
             let $func_ident = WasmFunction::new(f_apply, instr_f_idx, sigv, code_present_serialized);
             let mut $args_ident = MutDynResults::new(argc, resc, sigv, sigtypv);
