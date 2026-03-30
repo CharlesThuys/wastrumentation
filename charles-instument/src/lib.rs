@@ -1,4 +1,5 @@
 use std::alloc::{GlobalAlloc};
+use std::mem;
 use std::path::absolute;
 
 use indoc::formatdoc;
@@ -179,24 +180,23 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
         },
     });
 
-    let global_index = module.add_global(ValType::I32, Mutability::Mut, vec![Instr::Const(Val::I32(0)), Instr::End]);
-
     println!("memory: {:?}", module.memories);
 
 
     println!("data: {:?}", module.datas);
     
-    if module.memories.is_empty() {
-        let memory = Memory::new(Limits { initial_size: original_function_count as u32, max_size: None});
-        let mem_idx = Idx::<Memory>::from(module.memories.len());
+    
+    let memory = Memory::new(Limits { initial_size: original_function_count as u32, max_size: None});
+    let memory_idx = module.memories.len() as u32;
+    let mem_idx = Idx::<Memory>::from(module.memories.len());
 
-        module.memories.push(memory);
+    module.memories.push(memory);
 
-        module.datas.push(Data {
-            init: vec![1; original_function_count],
-            mode: DataMode::Active { memory: mem_idx, offset: vec![Const(Val::I32(0)), End], },
-        });
-    } else {
+    module.datas.push(Data {
+        init: vec![1; original_function_count],
+        mode: DataMode::Active { memory: mem_idx, offset: vec![Const(Val::I32(0)), End], },
+    });
+    /*  } else {
         let (mem_idx,  memory) = module.memories().last().unwrap();
         let mut new_memory = memory.clone();
         new_memory.limits = Limits { initial_size: memory.limits.initial_size + (original_function_count as u32), max_size: None };
@@ -207,7 +207,7 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
             mode: DataMode::Active { memory: mem_idx, offset: vec![Const(Val::I32(0)), End], },
         });
         // TODO: Expand memory size
-    }
+    }*/
 
     println!("memory: {:?}", module.memories);
    
@@ -226,7 +226,7 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
                         // FLAG MEMORY INDEX
                         new_body.push(Const(Val::I32(index.to_u32() as i32)));
                         // LOAD FLAG VALUE
-                        new_body.push(Instr::Load(LoadOp::I32Load8U, Memarg::default(LoadOp::I32Load8U)));
+                        new_body.push(Instr::Load(LoadOp::I32Load8U, Memarg::default_with_index(LoadOp::I32Load8U, memory_idx)));
                         // ADD FLAG TO BASE IDX
                         new_body.push(Binary(BinaryOp::I32Add));
                         // CALL INDIRECT FROM TABLE
@@ -241,12 +241,12 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
                         // BASE IDX IN TABLE
                         new_body.push(Const(Val::I32(index.to_u32() as i32 * 2)));
                         // LOAD FLAG VALUE
-                        new_body.push(Instr::Load(LoadOp::I32Load8U, Memarg::default(LoadOp::I32Load8U)));
+                        new_body.push(Instr::Load(LoadOp::I32Load8U, Memarg::default_with_index(LoadOp::I32Load8U, memory_idx)));
                         // PERFORM BITWISE OPERATION
                         new_body.push(Const(Val::I32(1)));
                         new_body.push(Binary(BinaryOp::I32Xor));
                         // STORE THE VALUE BACK
-                        new_body.push(Instr::Store(StoreOp::I32Store8, Memarg::default(StoreOp::I32Store8)));
+                        new_body.push(Instr::Store(StoreOp::I32Store8, Memarg::default_with_index(StoreOp::I32Store8, memory_idx)));
                         
                         continue;
                     }

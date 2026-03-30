@@ -22,5 +22,5 @@ wastrumentation-lang-rust = { workspace = true }
 wastrumentation-lang-assemblyscript = { workspace = true }
 io = "0.0.2"
 libc = "0.2.177"
-wasabi_wasm = { git = "https://github.com/aaronmunsters/wasabi.git", rev = "ee2fb70" }
+wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
 thiserror = { workspace = true }
