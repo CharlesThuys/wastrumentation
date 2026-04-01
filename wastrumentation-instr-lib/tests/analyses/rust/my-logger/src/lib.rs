@@ -1,5 +1,13 @@
 use wastrumentation_rs_stdlib::*;
 
+advice! { apply (function : WasmFunction, args : MutDynArgs, ress : MutDynResults) {
+        function.apply();
+        if ress.argc > 0 && ress.get_res(0).as_i32() == 18 {
+            function.turn_off();
+        }
+    }
+}
+
 advice! { unary (
         operator: UnaryOperator,
         operand: WasmValue,
@@ -18,13 +26,5 @@ advice! { binary (
     ) {
         println!("[MYLOGGER:] binary generic {operator:#?} {l_operand:#?} {r_operand:#?}, location: {location:?}");
         operator.apply(l_operand, r_operand)
-    }
-}
-
-advice! { call pre (
-        target_func : FunctionIndex,
-        location: Location,
-    ) {
-        println!("[MYLOGGER:] call pre generic function_index: {target_func:#?}, location: {location:?}");
     }
 }

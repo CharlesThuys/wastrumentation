@@ -32,6 +32,7 @@ pub const CODE_IS_IMPORT: i32 = 1;
 pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     module: &mut Module,
     pre_instrumentation_function_indices: &HashSet<Idx<Function>>,
+    uninstrumented_function_indices: &HashMap<Idx<Function>, Idx<Function>>,
     wasp_exported_generic_apply_trap: &WasmExport,
     wasp_imported_generic_apply_base: &WasmImport,
     wasp_imported_switch_instrument_flag: &WasmImport
@@ -57,30 +58,19 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     let mut apply_table_funs = vec![];
 
     
-    // Create new memory if none
-    if module.memories.is_empty() {
-        let flag_memory = Memory::new(Limits { initial_size: 1, max_size: None });
-        module.memories.push(flag_memory);
-    }
-
-    let flag_base: i32 = 1_000_000;
-
-    let memory_idx = Idx::<Memory>::from(0_u32);
+    // Create new memory for flags
+    let flag_memory = Memory::new(Limits { initial_size: pre_instrumentation_function_indices.len() as u32, max_size: None });
+    let flag_memory_index = module.memories.len() as u32;
+    module.memories.push(flag_memory);
 
     // Fill memory with initizlized flags
     module.datas.push(wasabi_wasm::Data {
         init: vec![1; pre_instrumentation_function_indices.capacity()],
         mode: wasabi_wasm::DataMode::Active { 
-            memory: memory_idx, 
-            offset: vec![Const(Val::I32(flag_base)), End], 
+            memory: Idx::<Memory>::from(flag_memory_index), 
+            offset: vec![Const(Val::I32(0)), End], 
         },
     });
-
-    // HashMap for function_idx and its global
-    let mut globals: HashMap<i32, Idx<Global>> = HashMap::new();
-    
-    // Initialize flags
-    
     
     for function_index in pre_instrumentation_function_indices {
         let target_function_type = module.function(*function_index).type_;
@@ -178,11 +168,31 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             CODE_IS_IMPORT
         }));
 
-        let mut instrumented_body = Vec::new();
+        let uninstrumented_function_index = uninstrumented_function_indices.get(function_index).expect("uninstrumented function index should exist" );
 
+        let mut instrumented_body = Vec::new();      
+
+        // instrumented_body.extend(push_args_on_stack);
+
+        instrumented_body.extend_from_slice(&[
+            const_apply_table_index.clone(),
+
+            // --- load flag ---
+            Instr::Load(LoadOp::I32Load8U, Memarg::default_with_index(LoadOp::I32Load8U, flag_memory_index)),
+            // --- flag == 0 ---
+            Instr::Unary(wasabi_wasm::UnaryOp::I32Eqz),
+
+            // --- if ---
+            Instr::If(FunctionType::new(&[], target_function_type.results())),
+        ]);
+            // THEN
+            instrumented_body.extend(push_args_on_stack.clone());
+            instrumented_body.push(Instr::Call(*uninstrumented_function_index));
+
+            // ELSE
+        instrumented_body.push(Instr::Else);
         
         instrumented_body.extend(push_args_on_stack);
-        // TODO: Check flag to skip serialization and call original function
         instrumented_body.push(call_allocate_values_buffer);
         instrumented_body.push(local_set_values_buffer_ptr);
         instrumented_body.push(call_allocate_types_buffer);
@@ -209,11 +219,9 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         instrumented_body.push(local_get_stack_types_ptr());
         instrumented_body.push(call_free_types_buffer);
         instrumented_body.push(End);
+        instrumented_body.push(End); // end of if
         original_function.code_mut().unwrap().body = instrumented_body;
 
-        // Add global per function
-        let global_idx = module.add_global(ValType::I32, Mutability::Mut, vec![Const(Val::I32(1)), End]);
-        globals.insert(function_index.to_u32() as i32, global_idx);
     }
 
     let apply_count = u32::try_from(apply_table_funs.len()).unwrap();
@@ -262,18 +270,14 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         .export
         .push(wasp_imported_generic_apply_base.name.to_string());
 
-    let random_globale = module.add_global(ValType::I32, Mutability::Mut, vec![Const(Val::I32(0)), End]);
-
     // 3. Generate 'switch instr' 
     let switch_instrumentation_idx = module.add_function(
         wasp_imported_switch_instrument_flag.as_function_type(),
         vec![],
         vec![
-            Const(Val::I32(flag_base)),
-            Local(LocalOp::Get, 1_usize.into()), // f_idx
-            Binary(BinaryOp::I32Add),
-            Local(LocalOp::Get, 0_usize.into()), // flag_value
-            Instr::Store(StoreOp::I32Store8, wasabi_wasm::Memarg::default(StoreOp::I32Store8)),
+            Local(LocalOp::Get, 0_usize.into()), // f_idx
+            Local(LocalOp::Get, 1_usize.into()), // flag_value
+            Instr::Store(StoreOp::I32Store8, wasabi_wasm::Memarg::default_with_index(StoreOp::I32Store8, flag_memory_index)),
             End,
         ],
     );

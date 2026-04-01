@@ -7,7 +7,6 @@ use wastrumentation_rs_stdlib::*;
 advice! { apply (function : WasmFunction, args : MutDynArgs, ress : MutDynResults) {
         println!("[ANALYSIS:] apply (pre) {function:#?}({args:#?})");
         function.apply();
-        function.turn_off();
         println!("[ANALYSIS:] apply (post) {function:#?}({args:#?}) = {ress:#?}");
     }
 }

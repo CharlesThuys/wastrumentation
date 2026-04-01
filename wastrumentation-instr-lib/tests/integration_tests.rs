@@ -700,7 +700,7 @@ fn test_analysis_mylogger() {
         absolute("./tests/analyses/rust/my-logger/Cargo.toml").unwrap(),
     );
 
-    let hooks = vec![Hook::Binary, Hook::Unary].into_iter().collect();
+    let hooks = vec![Hook::Binary, Hook::Unary, Hook::GenericApply].into_iter().collect();
     let analysis = RustAnalysisSpec { source, hooks }.into();
 
     let configuration = Configuration {
@@ -745,27 +745,39 @@ fn test_analysis_mylogger() {
     declare_fns_from_linker! {linker, store, "main", add [i32, i32] [i32]}
     declare_fns_from_linker! {linker, store, "main", mul [i32, i32] [i32]}
 
-    const EXPECTED_ANALYSIS_STDOUT: &str = indoc::indoc! { r#"
-    [MYLOGGER:] binary generic I32Add I32(
-        0,
-    ) I32(
-        0,
-    ), location: Location { instr_index: 0, funct_index: 2 }
-    [MYLOGGER:] binary generic I32Add I32(
-        5,
-    ) I32(
-        6,
-    ), location: Location { instr_index: 0, funct_index: 2 }
-    "# };
+    const EXPECTED_ANALYSIS_STDOUT: &str = indoc::indoc! { r#"[MYLOGGER:] binary generic I32Add I32(
+            0,
+        ) I32(
+            0,
+        ), location: Location { instr_index: 0, funct_index: 2 }
+        [MYLOGGER:] binary generic I32Add I32(
+            5,
+        ) I32(
+            6,
+        ), location: Location { instr_index: 0, funct_index: 2 }
+        [MYLOGGER:] binary generic I32Mul I32(
+            6,
+        ) I32(
+            3,
+        ), location: Location { instr_index: 1, funct_index: 2 }
+        [MYLOGGER:] binary generic I32Mul I32(
+            8,
+        ) I32(
+            3,
+        ), location: Location { instr_index: 1, funct_index: 2 }
+        "# };
 
     assert_eq!(wasm_call!(store, add, (0, 0)), 0);
 
     assert_eq!(wasm_call!(store, add, (5, 6)), 11);
+
+    assert_eq!(wasm_call!(store, mul, (6, 3)), 18);
+
+    assert_eq!(wasm_call!(store, mul, (8, 3)), 24);
 
     assert_eq!(
         EXPECTED_ANALYSIS_STDOUT,
         String::from_utf8_lossy(&stdout.contents())
     );
 
-    assert_eq!(wasm_call!(store, mul, (8, 3)), 24);
 }

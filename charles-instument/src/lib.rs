@@ -181,10 +181,7 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
     });
 
     println!("memory: {:?}", module.memories);
-
-
     println!("data: {:?}", module.datas);
-    
     
     let memory = Memory::new(Limits { initial_size: original_function_count as u32, max_size: None});
     let memory_idx = module.memories.len() as u32;

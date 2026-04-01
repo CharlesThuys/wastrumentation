@@ -8,6 +8,7 @@ pub mod wasm_constructs;
 
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use wasabi_wasm::Module;
 use wasmparser;
 use crate::instrument::Instrumented;
 use analysis::ProcessedAnalysis;
@@ -133,6 +134,10 @@ where
             None
         };
 
+        let (mmodule, _a, _b) = Module::from_bytes(&instrumented_input).expect("instrumented input ok");
+        let _ = mmodule.to_file("instrumented_input.wasm");
+
+        
         wasmparser::validate(&instrumented_input).expect("instrument input ok");
         wasmparser::validate(&analysis_wasm).expect("analysis wasm ok");
 
