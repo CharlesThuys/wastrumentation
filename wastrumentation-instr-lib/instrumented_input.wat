@@ -72,7 +72,7 @@
   (import "wastrumentation_stack" "store_rets_ret_i32_arg_i32_i32" (func $wastrumentation_stack.store_rets_ret_i32_arg_i32_i32 (type $t28)))
   (func $module/add (type $t24) (param $0 i32) (param $1 i32) (result i32)
     (local $l2 i32) (local $l3 i32)
-    i32.const 0
+    i32.const 1
     i32.load8_u
     i32.eqz
     if $I0 (result i32)
@@ -86,7 +86,7 @@
       local.set $l2
       call $wastrumentation_stack.allocate_types_ret_i32_arg_i32_i32
       local.set $l3
-      i32.const 0
+      i32.const 1
       i32.const 0
       i32.const 2
       i32.const 1
@@ -103,7 +103,7 @@
     end)
   (func $module/mul (type $t24) (param $0 i32) (param $1 i32) (result i32)
     (local $l2 i32) (local $l3 i32)
-    i32.const 1
+    i32.const 0
     i32.load8_u
     i32.eqz
     if $I0 (result i32)
@@ -117,7 +117,7 @@
       local.set $l2
       call $wastrumentation_stack.allocate_types_ret_i32_arg_i32_i32
       local.set $l3
-      i32.const 1
+      i32.const 0
       i32.const 1
       i32.const 2
       i32.const 1
@@ -143,8 +143,8 @@
   (func $f39 (type $t24) (param $p0 i32) (param $p1 i32) (result i32)
     local.get $p0
     local.get $p1
-    i32.const 33
-    i64.const 0
+    i32.const 35
+    i64.const 1
     i64.const 2
     call $WASTRUMENTATION_ANALYSIS.binary_i32_i32_to_i32)
   (func $f40 (type $t25) (param $p0 i32)
@@ -159,8 +159,8 @@
   (func $f41 (type $t24) (param $p0 i32) (param $p1 i32) (result i32)
     local.get $p0
     local.get $p1
-    i32.const 35
-    i64.const 1
+    i32.const 33
+    i64.const 0
     i64.const 2
     call $WASTRUMENTATION_ANALYSIS.binary_i32_i32_to_i32)
   (func $f42 (type $t25) (param $p0 i32)

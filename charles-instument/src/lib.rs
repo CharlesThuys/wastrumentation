@@ -300,3 +300,105 @@ fn instrument_test() -> Result<(),  wastrumentation::error::InstrumentationError
     // let instrument_f: () = module.globals.push(wasabi_wasm::Global::new(GlobalType(ValType::I32, Mutability::Mut), vec![Const(Val::I32(0))])); 
     Ok(())
 }
+
+
+
+const SECOND_INPUT: &str = r#"
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (memory $0 0)
+ (export "add" (func $module/add))
+ (export "mul" (func $module/mul))
+ (export "memory" (memory $0))
+ (func $module/mul (param $0 i32) (param $1 i32) (result i32)
+  local.get $0
+  local.get $1
+  i32.mul
+ )
+ (func $module/add (param $0 i32) (param $1 i32) (result i32)
+  local.get $0
+  i32.const 8
+  i32.gt_s
+  if (result i32)
+   local.get $0
+   local.get $1
+   i32.add
+  else
+   local.get $0
+   local.get $1
+   call $module/mul
+  end
+ )
+)
+"#;
+
+
+#[test]
+fn block_test() -> Result<(),  wastrumentation::error::InstrumentationError> {
+
+
+    // const SOURCE: Source = Source::Rust(INPUT, WasiSupport::Disabled, Profile::Release);
+
+    // let rust_input_program = SOURCE.to_input_program();
+
+    let wat_input_program = wat2wasm(SECOND_INPUT).unwrap();
+    
+    println!("input program:");
+    println!("{:?}", wat_input_program);
+
+    let (mut module, _offsets, _issue) = M2::from_bytes(&wat_input_program).map_err(InstrumentationError::ParseModuleError)?;
+    
+    // Get the indexes
+    let original_idxs: Vec<Idx<Function>> = module.functions().map(|(idx , _f)| idx ).collect();
+
+    // Loop over functions and print instructions
+    for f_idx in original_idxs.clone() {
+        println!("function index: {}", f_idx.to_u32());
+        let func = module.function(f_idx);
+        println!("function export: {:?}", func.export);
+
+        func.code().unwrap().body.iter().for_each(|instr| println!("{:?}", instr));
+    }
+
+    
+    let instrumented_program = module.to_bytes().unwrap();
+
+    let _ = module.to_file("instrumented.wasm");
+
+    println!("module after instrumentation:");
+
+    println!("{:?}", instrumented_program);
+
+    let stdout = wasmtime_wasi::p2::pipe::MemoryOutputPipe::new(usize::MAX);
+    let stderr = wasmtime_wasi::p2::pipe::MemoryOutputPipe::new(usize::MAX);
+
+    // Construct the wasm engine
+    let engine = Engine::default();
+
+    // Add the WASI preview1 API to the linker (will be implemented in terms of the preview2 API)
+    let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
+    preview1::add_to_linker_sync(&mut linker, |t| t).unwrap();
+
+    // Add capabilities (e.g. filesystem access) to the WASI preview2 context here.
+    // Here only stdio is inherited, but see docs of `WasiCtxBuilder` for more.
+    let wasi_ctx = WasiCtxBuilder::new()
+        .stdout(stdout.clone())
+        .stderr(stderr.clone())
+        .build_p1();
+
+    let mut store = Store::new(&engine, wasi_ctx);
+
+    let module = Module::from_binary(&engine, &instrumented_program).unwrap();
+
+    linker.module(&mut store, "main", &module).unwrap();
+
+    // Get & invoke function
+    declare_fns_from_linker! {linker, store, "main", add [i32, i32] [i32]}
+
+
+    assert_eq!(wasm_call!(store, add, (9, 482)), 500);
+
+
+    // let instrument_f: () = module.globals.push(wasabi_wasm::Global::new(GlobalType(ValType::I32, Mutability::Mut), vec![Const(Val::I32(0))])); 
+    Ok(())
+}
