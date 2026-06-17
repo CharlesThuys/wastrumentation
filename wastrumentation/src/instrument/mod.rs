@@ -175,8 +175,8 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             .code()
             .ok_or(InstrumentationError::AttemptInnerInstrumentImport)?
             .locals
-            .clone().iter().map(|l| l.type_.clone()).collect::<Vec<ValType>>();
-        let ftype = module.function(*target_function_idx).type_.clone(); 
+            .clone().iter().map(|l| l.type_).collect::<Vec<ValType>>();
+        let ftype = module.function(*target_function_idx).type_; 
         let uninstrumented_idx = module.add_function(ftype, locals, target_low_level_body.clone());
         uninstrumented_function_indices.insert(*target_function_idx, uninstrumented_idx);
     }
