@@ -14,6 +14,8 @@ pub const FUNCTION_NAME_SPECIALIZED_IF_THEN_POST: &str = "trap_if_then_post";
 pub const FUNCTION_NAME_SPECIALIZED_IF_THEN_ELSE_POST: &str = "trap_if_then_else_post";
 pub const NAMESPACE_TRANSFORMED_INPUT: &str = "transformed_input";
 
+pub const FUNCTION_NAME_SWITCH_INSTRUMENT_FLAG: &str = "set_instr_flag";
+
 pub const TRAP_NAME_UNARY_I32_TO_I32: &str = "unary_i32_to_i32";
 pub const TRAP_NAME_UNARY_I64_TO_I32: &str = "unary_i64_to_i32";
 pub const TRAP_NAME_UNARY_I64_TO_I64: &str = "unary_i64_to_i64";
@@ -120,7 +122,7 @@ pub struct WasmExport {
 
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct AnalysisInterface {
-    pub generic_interface: Option<(WasmExport, WasmImport)>,
+    pub generic_interface: Option<(WasmExport, WasmImport, WasmImport)>,
     pub if_then_trap: Option<WasmExport>,
     pub if_then_post_trap: Option<WasmExport>,
     pub if_then_else_trap: Option<WasmExport>,
@@ -206,13 +208,14 @@ pub struct ProcessedAnalysis<Language: SourceCodeBound> {
     pub analysis_interface: AnalysisInterface,
 }
 
-type ApplyInterface = (WasmExport, WasmImport);
+type ApplyInterface = (WasmExport, WasmImport, WasmImport);
 
 impl AnalysisInterface {
     pub fn interface_generic_apply() -> ApplyInterface {
         // The analysis its interface
         // -> EXPORTS a `generic apply`, implemented by the analysis developer
         // -> IMPORTS a `call base`, which the analysis may call into to 'resume' case computation
+        // -> IMPORTS a `switch_instr_flag` which switches the instrumentation flag of a given function
         (
             WasmExport {
                 name: FUNCTION_NAME_GENERIC_APPLY.into(),
@@ -224,6 +227,12 @@ impl AnalysisInterface {
                 namespace: NAMESPACE_TRANSFORMED_INPUT.into(),
                 name: FUNCTION_NAME_CALL_BASE.into(),
                 // f_apply, sigv
+                args: vec![I32, I32],
+                results: vec![],
+            },
+            WasmImport {
+                namespace: NAMESPACE_TRANSFORMED_INPUT.into(),
+                name: FUNCTION_NAME_SWITCH_INSTRUMENT_FLAG.into(),
                 args: vec![I32, I32],
                 results: vec![],
             },
