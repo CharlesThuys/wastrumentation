@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use wasabi_wasm::Code;
 use wasabi_wasm::FunctionType;
@@ -166,17 +166,23 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         .collect::<Result<Vec<HighLevelBody>, InstrumentationError>>()?;
 
     let mut uninstrumented_function_indices = HashMap::new();
-    
+
     // Duplicate the original function bodies to save their state before any transformation
-    for (target_function_idx, target_high_level_body) in target_indices.iter().zip(target_high_level_functions.clone()) {
+    for (target_function_idx, target_high_level_body) in target_indices
+        .iter()
+        .zip(target_high_level_functions.clone())
+    {
         let LowLevelBody(target_low_level_body) = target_high_level_body.into();
         let locals = module
             .function(*target_function_idx)
             .code()
             .ok_or(InstrumentationError::AttemptInnerInstrumentImport)?
             .locals
-            .clone().iter().map(|l| l.type_).collect::<Vec<ValType>>();
-        let ftype = module.function(*target_function_idx).type_; 
+            .clone()
+            .iter()
+            .map(|l| l.type_)
+            .collect::<Vec<ValType>>();
+        let ftype = module.function(*target_function_idx).type_;
         let uninstrumented_idx = module.add_function(ftype, locals, target_low_level_body.clone());
         uninstrumented_function_indices.insert(*target_function_idx, uninstrumented_idx);
     }
@@ -297,19 +303,18 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         });
     }
 
-    let instrumentation_library =
-        generic_interface
-            .as_ref()
-            .map(|(generic_import, generic_export, switch_instr_flag_export)| {
-                function_application::instrument::<InstrumentationLanguage>(
-                    &mut module,
-                    &target_indices_including_imports,
-                    &uninstrumented_function_indices,
-                    generic_import,
-                    generic_export,
-                    switch_instr_flag_export
-                )
-            });
+    let instrumentation_library = generic_interface.as_ref().map(
+        |(generic_import, generic_export, switch_instr_flag_export)| {
+            function_application::instrument::<InstrumentationLanguage>(
+                &mut module,
+                &target_indices_including_imports,
+                &uninstrumented_function_indices,
+                generic_import,
+                generic_export,
+                switch_instr_flag_export,
+            )
+        },
+    );
 
     memory::inject_memory_loads(&mut module);
     memory::inject_memory_stores(&mut module);
