@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 // Wastrumentation imports
 use rust_to_wasm_compiler::{Profile, WasiSupport};
 use wastrumentation::compiler::Compiles;
