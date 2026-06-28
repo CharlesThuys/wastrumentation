@@ -153,7 +153,7 @@ def execute_benchmark(platform, input_program, input_program_path, analysis, run
 for (platform, analysis, benchmarks_directory) in [('uninstrumented', 'none', baseline)] + wastrumentation_analyses_paths:
     for input_program in INPUT_PROGRAMS:
         times_this_combination_timed_out = 0
-        input_program_path = path.join(benchmarks_directory, input_program, f"{input_program}.wasm")
+        input_program_path = path.join(benchmarks_directory, input_program, f'{input_program}.wasm')
         assert path.exists(input_program_path), input_program_path
 
         # Try one run, with the timeout threshold

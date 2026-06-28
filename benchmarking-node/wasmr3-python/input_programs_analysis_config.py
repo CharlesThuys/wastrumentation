@@ -82,7 +82,7 @@ def estimate_total_benchmark_time():
     (hours, seconds) = divmod(seconds, 3600)
     (minutes, seconds) = divmod(seconds, 60)
 
-    formatted = f"ESTIMATE: {hours:02.0f} hours, {minutes:02.0f} minutes and {seconds:05.2f} seconds"
+    formatted = f'ESTIMATE: {hours:02.0f} hours, {minutes:02.0f} minutes and {seconds:05.2f} seconds'
     return formatted
 
 print(estimate_total_benchmark_time())
