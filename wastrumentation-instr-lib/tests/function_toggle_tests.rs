@@ -121,7 +121,7 @@ fn test_toggle_and_preserve_result() {
     // CHECK uninstrumented
     assert_eq!(wasm_call! {store, f, 40, 7}, 47);
     assert_eq!(wasm_call! {store, g}, 45);
-    
+
     ////////////////
     // INSTRUMENT //
     ////////////////
@@ -129,13 +129,10 @@ fn test_toggle_and_preserve_result() {
     let instrumentation_compiler =
         ASCompiler::setup_compiler().expect("Setup AssemblyScript compiler");
 
-    const PATH_INPUT_ANLYSIS: &str = "./tests/analyses/rust/function-toggle/toggle-instrumentation/Cargo.toml";
+    const PATH_INPUT_ANLYSIS: &str =
+        "./tests/analyses/rust/function-toggle/toggle-instrumentation/Cargo.toml";
     let source = Manifest(WasiSupport::Enabled, absolute(PATH_INPUT_ANLYSIS).unwrap());
-    let hooks = vec![
-        Hook::GenericApply
-    ]
-    .into_iter()
-    .collect();
+    let hooks = vec![Hook::GenericApply].into_iter().collect();
     let analysis = RustAnalysisSpec { source, hooks }.into();
 
     let configuration = Configuration {
@@ -195,7 +192,7 @@ fn test_toggle_and_preserve_result() {
     assert_eq!(wasm_call! {store, f, 40, 7}, 47);
     assert_eq!(wasm_call! {store, get_apply_count}, 1);
     assert_eq!(wasm_call! {store, get_function_apply_count, 0}, 1);
-    
+
     assert_eq!(wasm_call! {store, get_function_apply_count, 1}, 0);
     assert_eq!(wasm_call! {store, g}, 45);
     assert_eq!(wasm_call! {store, get_apply_count}, 2);
@@ -204,8 +201,6 @@ fn test_toggle_and_preserve_result() {
     assert_eq!(wasm_call! {store, get_apply_count}, 2);
     assert_eq!(wasm_call! {store, get_function_apply_count, 1}, 1);
 }
-
-
 
 #[test]
 fn test_hooks_suppressed() {
@@ -228,7 +223,7 @@ fn test_hooks_suppressed() {
     "#;
 
     let input_program = wat2wasm(INPUT_PROGRAM_SOURCE).unwrap();
-    
+
     ////////////////
     // INSTRUMENT //
     ////////////////
@@ -236,14 +231,10 @@ fn test_hooks_suppressed() {
     let instrumentation_compiler =
         ASCompiler::setup_compiler().expect("Setup AssemblyScript compiler");
 
-    const PATH_INPUT_ANLYSIS: &str = "./tests/analyses/rust/function-toggle/toggle-instrumentation/Cargo.toml";
+    const PATH_INPUT_ANLYSIS: &str =
+        "./tests/analyses/rust/function-toggle/toggle-instrumentation/Cargo.toml";
     let source = Manifest(WasiSupport::Enabled, absolute(PATH_INPUT_ANLYSIS).unwrap());
-    let hooks = vec![
-        Hook::GenericApply,
-        Hook::Binary,
-    ]
-    .into_iter()
-    .collect();
+    let hooks = vec![Hook::GenericApply, Hook::Binary].into_iter().collect();
     let analysis = RustAnalysisSpec { source, hooks }.into();
 
     let configuration = Configuration {
@@ -299,14 +290,13 @@ fn test_hooks_suppressed() {
     assert_eq!(wasm_call! {store, get_binary_count}, 1);
     assert_eq!(wasm_call! {store, f}, 47);
     assert_eq!(wasm_call! {store, get_binary_count}, 1);
-    
+
     assert_eq!(wasm_call! {store, get_binary_count}, 1);
     assert_eq!(wasm_call! {store, g}, 45);
     assert_eq!(wasm_call! {store, get_binary_count}, 2);
     assert_eq!(wasm_call! {store, g}, 45);
     assert_eq!(wasm_call! {store, get_binary_count}, 2);
 }
-
 
 #[test]
 fn test_reenable_instrumentation() {
@@ -333,13 +323,10 @@ fn test_reenable_instrumentation() {
     let instrumentation_compiler =
         ASCompiler::setup_compiler().expect("Setup AssemblyScript compiler");
 
-    const PATH_INPUT_ANLYSIS: &str = "./tests/analyses/rust/function-toggle/re-enable-instrumentation/Cargo.toml";
+    const PATH_INPUT_ANLYSIS: &str =
+        "./tests/analyses/rust/function-toggle/re-enable-instrumentation/Cargo.toml";
     let source = Manifest(WasiSupport::Enabled, absolute(PATH_INPUT_ANLYSIS).unwrap());
-    let hooks = vec![
-        Hook::GenericApply,
-    ]
-    .into_iter()
-    .collect();
+    let hooks = vec![Hook::GenericApply].into_iter().collect();
     let analysis = RustAnalysisSpec { source, hooks }.into();
 
     let configuration = Configuration {
@@ -396,17 +383,16 @@ fn test_reenable_instrumentation() {
     assert_eq!(wasm_call! {store, get_function_apply_count, 0}, 1);
     assert_eq!(wasm_call! {store, f}, 47);
     assert_eq!(wasm_call! {store, get_function_apply_count, 0}, 1);
-    
+
     // Run g and enable f again
     assert_eq!(wasm_call! {store, get_function_apply_count, 1}, 0);
     assert_eq!(wasm_call! {store, g}, 45);
     assert_eq!(wasm_call! {store, get_function_apply_count, 1}, 1);
-    
+
     // Run f again and confirm it is enabled
     assert_eq!(wasm_call!(store, f), 47);
     assert_eq!(wasm_call! {store, get_function_apply_count, 0}, 2);
 }
-
 
 #[test]
 fn test_toggled_nested_calls_independent() {
@@ -435,13 +421,10 @@ fn test_toggled_nested_calls_independent() {
     let instrumentation_compiler =
         ASCompiler::setup_compiler().expect("Setup AssemblyScript compiler");
 
-    const PATH_INPUT_ANLYSIS: &str = "./tests/analyses/rust/function-toggle/count-apply-hooks/Cargo.toml";
+    const PATH_INPUT_ANLYSIS: &str =
+        "./tests/analyses/rust/function-toggle/count-apply-hooks/Cargo.toml";
     let source = Manifest(WasiSupport::Enabled, absolute(PATH_INPUT_ANLYSIS).unwrap());
-    let hooks = vec![
-        Hook::GenericApply,
-    ]
-    .into_iter()
-    .collect();
+    let hooks = vec![Hook::GenericApply].into_iter().collect();
     let analysis = RustAnalysisSpec { source, hooks }.into();
 
     let configuration = Configuration {
@@ -507,5 +490,4 @@ fn test_toggled_nested_calls_independent() {
 
     assert_eq!(wasm_call! {store, get_function_apply_count, 0}, 1); // Callee instrumented
     assert_eq!(wasm_call! {store, get_function_apply_count, 1}, 1); // Caller not instrumented, stays at 2
-
 }

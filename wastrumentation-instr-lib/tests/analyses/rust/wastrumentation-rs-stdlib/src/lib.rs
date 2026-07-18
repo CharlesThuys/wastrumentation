@@ -115,7 +115,7 @@ impl Location {
     pub fn function_index(&self) -> i64 {
         self.funct_index
     }
-    
+
     pub fn function_index_typed(&self) -> FunctionIndex {
         FunctionIndex(self.funct_index as i32)
     }

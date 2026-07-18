@@ -19,10 +19,10 @@ pub extern "C" fn get_binary_count() -> i32 {
     unsafe { BINARY_COUNT }
 }
 
-advice! { 
+advice! {
     apply (function : WasmFunction, args : MutDynArgs, ress : MutDynResults) {
-        unsafe { 
-            APPLY_COUNT += 1; 
+        unsafe {
+            APPLY_COUNT += 1;
             FUNCTION_APPLY_COUNT[function.instr_f_idx as usize] += 1;
         }
         function.apply();
