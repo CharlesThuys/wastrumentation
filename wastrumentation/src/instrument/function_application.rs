@@ -188,7 +188,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         // instrumented_body.extend(push_args_on_stack);
 
         instrumented_body.extend_from_slice(&[
-            const_apply_table_index.clone(),
+            const_instrumented_function_index.clone(),
             // --- load flag ---
             Instr::Load(
                 LoadOp::I32Load8U,

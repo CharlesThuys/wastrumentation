@@ -115,6 +115,10 @@ impl Location {
     pub fn function_index(&self) -> i64 {
         self.funct_index
     }
+    
+    pub fn function_index_typed(&self) -> FunctionIndex {
+        FunctionIndex(self.funct_index as i32)
+    }
 }
 
 const TYPE_I32: i32 = 0;
@@ -320,6 +324,21 @@ impl WasmValue {
     }
 }
 
+// Functions to enable and disable the instrumentation
+pub fn set_function_instrumentation(function: FunctionIndex, flag: bool) {
+    unsafe {
+        set_instr_flag(function.0, if flag { 1 } else { 0 });
+    }
+}
+
+pub fn enable_function_instrumentation(function: FunctionIndex) {
+    set_function_instrumentation(function, true);
+}
+
+pub fn disable_function_instrumentation(function: FunctionIndex) {
+    set_function_instrumentation(function, false);
+}
+
 pub struct WasmFunction {
     pub f_apply: i32,
     pub instr_f_idx: i32,
@@ -374,8 +393,8 @@ impl WasmFunction {
         self.code_present_serialized == CODE_IS_PRESENT
     }
 
-    pub fn turn_off(&self) {
-        unsafe { set_instr_flag(self.f_apply, 0) }
+    pub fn set_instrumentation(&self, flag: bool) {
+        set_function_instrumentation(self.instr_f_idx(), flag);
     }
 }
 
