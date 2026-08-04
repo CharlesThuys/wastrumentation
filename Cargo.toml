@@ -8,6 +8,7 @@ members = [
     "cli",
     "wastrumentation-static-analysis",
     "supported-languages/*",
+    "charles-benchmarks",
 ]
 
 [workspace.dependencies]

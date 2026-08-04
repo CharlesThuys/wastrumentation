@@ -1,0 +1,10 @@
+duration_ms,duration_ns,program_name,instrumentation
+0,88086,factorial,uninstrumented
+0,60779,factorial,uninstrumented
+0,59132,factorial,uninstrumented
+0,235057,factorial,enabled
+0,246244,factorial,enabled
+0,256823,factorial,enabled
+0,79902,factorial,disabled
+0,82567,factorial,disabled
+0,88425,factorial,disabled

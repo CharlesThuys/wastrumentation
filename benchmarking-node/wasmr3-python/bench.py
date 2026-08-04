@@ -15,7 +15,7 @@ from report_code_size import report_code_size
 
 from config import node_wasm_wrap_path, path_executes_once, path_code_size, path_execution_bench
 from config import bench_suite_benchmarks_path, bench_suite_benchmarks_path_wasabi, bench_suite_benchmarks_path_wastrumentation
-from input_programs_analysis_config import ANALYSIS_FORWARD
+from input_programs_analysis_config import ANALYSIS_FORWARD, TOGGLE_OFF, GENERIC_APPLY
 
 from config import code_size_field_names
 from config import executes_once_field_names
@@ -38,13 +38,20 @@ setup_benchmarks_regular(node_wasm_wrap_path, candidate_input_benchmarks)
 # Instrument the benchmarks, only for `forward analysis`
 # FIXME: hardcoded case
 forward_analysis = next(filter(lambda analysis_name_pathed: analysis_name_pathed[0] == ANALYSIS_FORWARD, analysis_names_pathed))
-(forward_analysis_name, _, _, _, _) = forward_analysis
-assert forward_analysis_name == 'forward', f"Assumption that last in analysis_names_pathed is 'forward' analysis violated"
+toggle_off_analysis = next(filter(lambda analysis_name_pathed: analysis_name_pathed[0] == TOGGLE_OFF, analysis_names_pathed))
+generic_apply_analysis = next(filter(lambda analysis_name_pathed: analysis_name_pathed[0] == GENERIC_APPLY, analysis_names_pathed))
 
-for (analysis_name, wasabi_analysis_path, wastrumentation_analysis_path, wasabi_hooks, wastrumentation_hooks) in [forward_analysis]:
+(forward_analysis_name, _, _, _, _) = forward_analysis
+(toggle_off_analysis_name, _, _, _, _) = toggle_off_analysis
+(generic_apply_analysis_name, _, _, _, _) = generic_apply_analysis
+assert forward_analysis_name == 'forward', f"Assumption that last in analysis_names_pathed is 'forward' analysis violated"
+assert toggle_off_analysis_name == 'toggle-off', f"Assumption that last in analysis_names_pathed is 'forward' analysis violated"
+assert generic_apply_analysis_name == 'generic-apply', f"Assumption that last in analysis_names_pathed is 'forward' analysis violated"
+
+for (analysis_name, wasabi_analysis_path, wastrumentation_analysis_path, wasabi_hooks, wastrumentation_hooks) in [forward_analysis, generic_apply_analysis, toggle_off_analysis]:
     for (benchmark, benchmark_path) in candidate_input_benchmarks.items():
         # Setup benchmarks wasabi
-        if len(wasabi_hooks) != 0:
+        if False: # len(wasabi_hooks) != 0:
             setup_benchmarks_wasabi(
                 node_wasm_wrap_path,
                 benchmark,
@@ -87,18 +94,18 @@ with open(path_executes_once, 'w') as executes_once_file:
         )
         executes_once_file.flush()
 
-    for (analysis_name, wasabi_analysis_path, wastrumentation_analysis_path, wasabi_hooks, wastrumentation_hooks) in [forward_analysis]:
+    for (analysis_name, wasabi_analysis_path, wastrumentation_analysis_path, wasabi_hooks, wastrumentation_hooks) in [forward_analysis, generic_apply_analysis, toggle_off_analysis]:
         for (benchmark, benchmark_path) in candidate_input_benchmarks.items():
             # Run benchmarks [wasabi]
-            success_on_wasabi: bool = report_executes_once(
-                runtime = 'NodeJS',
-                platform = 'Wasabi',
-                analysis = analysis_name,
-                input_program = benchmark,
-                csv_writer = executes_once_writer,
-                target_build_directory = os.path.join(bench_suite_benchmarks_path_wasabi, analysis_name),
-            )
-            executes_once_file.flush()
+            # success_on_wasabi: bool = report_executes_once(
+            #     runtime = 'NodeJS',
+            #     platform = 'Wasabi',
+            #     analysis = analysis_name,
+            #     input_program = benchmark,
+            #     csv_writer = executes_once_writer,
+            #     target_build_directory = os.path.join(bench_suite_benchmarks_path_wasabi, analysis_name),
+            # )
+            # executes_once_file.flush()
 
             # Run benchmarks [wastrumentation]
             success_on_wastrumentation: bool = report_executes_once(
@@ -112,7 +119,7 @@ with open(path_executes_once, 'w') as executes_once_file:
             executes_once_file.flush()
 
             if benchmark not in forward_success_runs: forward_success_runs[benchmark] = {}
-            forward_success_runs[benchmark]['wasabi'] = success_on_wasabi
+            # forward_success_runs[benchmark]['wasabi'] = success_on_wasabi
             forward_success_runs[benchmark]['wastrumentation'] = success_on_wastrumentation
 
 ##########################################################
@@ -127,7 +134,7 @@ setup_benchmarks_regular(node_wasm_wrap_path, candidate_input_benchmarks)
 
 for (analysis_name, wasabi_analysis_path, wastrumentation_analysis_path, wasabi_hooks, wastrumentation_hooks) in analysis_names_pathed:
     for (benchmark, benchmark_path) in candidate_input_benchmarks.items():
-        if forward_success_runs[benchmark]['wasabi']:
+        if False: # forward_success_runs[benchmark]['wasabi']:
             # Setup benchmarks wasabi
             setup_benchmarks_wasabi(
                 node_wasm_wrap_path,
@@ -170,7 +177,7 @@ with open(path_code_size, 'w') as code_size_file:
 
     for (analysis_name, wasabi_analysis_path, wastrumentation_analysis_path, wasabi_hooks, wastrumentation_hooks) in analysis_names_pathed:
         for (benchmark, benchmark_path) in candidate_input_benchmarks.items():
-            if forward_success_runs[benchmark]['wasabi']:
+            if False: # forward_success_runs[benchmark]['wasabi']:
                 report_code_size(
                     platform = 'Wasabi',
                     analysis = analysis_name,
@@ -209,7 +216,7 @@ with open(path_execution_bench, 'w') as execution_bench_file:
 
     for (analysis_name, wasabi_analysis_path, wastrumentation_analysis_path, wasabi_hooks, wastrumentation_hooks) in analysis_names_pathed:
         for (benchmark, benchmark_path) in candidate_input_benchmarks.items():
-            if forward_success_runs[benchmark]['wasabi']:
+            if False: # forward_success_runs[benchmark]['wasabi']:
                 execute_benchmarks(
                     runtime = 'NodeJS',
                     platform = 'Wasabi',

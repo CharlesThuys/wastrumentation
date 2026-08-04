@@ -1,0 +1,10 @@
+duration_ms,program_name,instrumentation
+0,factorial,uninstrumented
+0,factorial,uninstrumented
+0,factorial,uninstrumented
+0,factorial,enabled
+0,factorial,enabled
+0,factorial,enabled
+0,factorial,disabled
+0,factorial,disabled
+0,factorial,disabled

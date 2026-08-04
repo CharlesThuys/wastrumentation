@@ -14,7 +14,8 @@ pub const FUNCTION_NAME_SPECIALIZED_IF_THEN_POST: &str = "trap_if_then_post";
 pub const FUNCTION_NAME_SPECIALIZED_IF_THEN_ELSE_POST: &str = "trap_if_then_else_post";
 pub const NAMESPACE_TRANSFORMED_INPUT: &str = "transformed_input";
 
-pub const FUNCTION_NAME_SWITCH_INSTRUMENT_FLAG: &str = "set_instr_flag";
+pub const FUNCTION_NAME_SET_F_INSTRUMENTATION: &str = "set_f_instrumentation";
+pub const FUNCTION_NAME_SET_INSTRUMENTATION: &str = "set_instrumentation";
 
 pub const TRAP_NAME_UNARY_I32_TO_I32: &str = "unary_i32_to_i32";
 pub const TRAP_NAME_UNARY_I64_TO_I32: &str = "unary_i64_to_i32";
@@ -122,7 +123,7 @@ pub struct WasmExport {
 
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct AnalysisInterface {
-    pub generic_interface: Option<(WasmExport, WasmImport, WasmImport)>,
+    pub generic_interface: Option<(WasmExport, WasmImport, WasmImport, WasmImport)>,
     pub if_then_trap: Option<WasmExport>,
     pub if_then_post_trap: Option<WasmExport>,
     pub if_then_else_trap: Option<WasmExport>,
@@ -208,7 +209,7 @@ pub struct ProcessedAnalysis<Language: SourceCodeBound> {
     pub analysis_interface: AnalysisInterface,
 }
 
-type ApplyInterface = (WasmExport, WasmImport, WasmImport);
+type ApplyInterface = (WasmExport, WasmImport, WasmImport, WasmImport);
 
 impl AnalysisInterface {
     pub fn interface_generic_apply() -> ApplyInterface {
@@ -232,8 +233,16 @@ impl AnalysisInterface {
             },
             WasmImport {
                 namespace: NAMESPACE_TRANSFORMED_INPUT.into(),
-                name: FUNCTION_NAME_SWITCH_INSTRUMENT_FLAG.into(),
+                name: FUNCTION_NAME_SET_F_INSTRUMENTATION.into(),
+                // instr_f_idx flag
                 args: vec![I32, I32],
+                results: vec![],
+            },
+            WasmImport {
+                namespace: NAMESPACE_TRANSFORMED_INPUT.into(),
+                name: FUNCTION_NAME_SET_INSTRUMENTATION.into(),
+                // flag
+                args: vec![I32],
                 results: vec![],
             },
         )

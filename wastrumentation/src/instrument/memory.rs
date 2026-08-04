@@ -109,11 +109,12 @@ fn transform(body: &BodyInner, target: Target) -> BodyInner {
                     result.push(typed_instr.place_original(instr.clone()));
                     continue;
                 }
-                (Target::MemoryFill(trap_idx), Instr::MemoryFill) => {
+                (Target::MemoryFill(trap_idx), Instr::MemoryFill(idx)) => {
                     result.extend_from_slice(&typed_instr.to_trap_call(&trap_idx));
                     // Even though there 3 known values on the stack, we will not include them as
                     // passing 3 return values in analysis languages (eg. Rust) is not well-suported...
                     // Perform operation
+                    let _ = idx;
                     result.push(typed_instr.place_original(instr.clone()));
                     continue;
                 }

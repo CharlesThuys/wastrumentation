@@ -12,6 +12,9 @@ ANALYSIS_TAINT = 'taint'
 ANALYSIS_FORWARD = 'forward'
 ANALYSIS_SAFE_HEAP = 'safe-heap'
 ANALYSIS_DENAN = 'denan'
+
+GENERIC_APPLY = 'generic-apply'
+TOGGLE_OFF = 'toggle-off'
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # DO NOT TOUCH VARIABLES ABOVE
 
@@ -21,16 +24,18 @@ NODE_BENCHMARK_RUNS = 1 # How often to rerun within a NodeJS instance
 
 # CONFIGURE ANALYSES
 configured_analyses_slower_than_forward = [
-    (ANALYSIS_BRANCHES, 1.00),
-    (ANALYSIS_OPCODES,  1.00),
-    (ANALYSIS_ICOUNT,   1.00),
-    (ANALYSIS_GLOBALS,  1.00),
-    (ANALYSIS_LOOPS,    1.00),
+    # (ANALYSIS_BRANCHES, 1.00),
+    # (ANALYSIS_OPCODES,  1.00),
+    # (ANALYSIS_ICOUNT,   1.00),
+    # (ANALYSIS_GLOBALS,  1.00),
+    # (ANALYSIS_LOOPS,    1.00),
     (ANALYSIS_FORWARD,  1.00), # <-- Do not disable
-    (ANALYSIS_DENAN,    1.00),
-    (ANALYSIS_SAFE_HEAP,1.00),
-    (ANALYSIS_MEMSTATS, 1.00),
-    (ANALYSIS_TAINT,    3.00),
+    # (ANALYSIS_DENAN,    1.00),
+    # (ANALYSIS_SAFE_HEAP,1.00),
+    # (ANALYSIS_MEMSTATS, 1.00),
+    # (ANALYSIS_TAINT,    3.00),
+    (GENERIC_APPLY,  1.00),
+    (TOGGLE_OFF,  1.00),
 ]
 
 configured_analyses = list(map(lambda ca_s: ca_s[0], configured_analyses_slower_than_forward))
@@ -39,9 +44,9 @@ configured_analyses = list(map(lambda ca_s: ca_s[0], configured_analyses_slower_
 input_programs_runtimes = [
     # INPUT PROGRAM   WASTRUMENTATION      WASABI
     ('rtexviewer',          0.346272,      0.436486),
-    ('rtexpacker',          0.346902,      0.427286),
+    # ('rtexpacker',          0.346902,      0.427286),
     ('game-of-life',        0.754667,      4.38687),
-    ('jqkungfu',            1.53478,      13.9628),
+    # ('jqkungfu',            1.53478,      13.9628),
     ('factorial',           1.76707,       9.94862),
     ('ffmpeg',              1.86548,       0.00000),
     ('figma-startpage',     3.49923,      18.7752),
@@ -49,22 +54,22 @@ input_programs_runtimes = [
     ('parquet',            21.7277,       94.5862),
     ('pacalc',             33.6566,      176.006),
     ('sqlgui',            124.09,       1503.17),
-    ('riconpacker',       332.826,      4836.58),
-    ('jsc',               554.888,         0.00),
-    ('boa',              1222.82,          0.00),
-    ('rguilayout',       2155.39,          0.00),
-    ('rfxgen',           2268.28,       5468.58),
-    ('bullet',           2442.11,       2955.46),
-    ('rguistyler',       2706.76,       7396.98),
-    ('guiicons',         2752.84,       5967.73),
-    ('funky-kart',       2931.1,        4247.15),
-    ('sandspiel',       14846.6,           0.00),
-    ('pathfinding'  ,   35347.8,           0.00),
-    ('commanderkeen',   40231.0,           0.00),
-    ('fib',            169859.0,      214271.0),
-    ('multiplyInt',    202245.0,      184175.0),
-    ('mandelbrot',     213539.0,      260168.0),
-    ('multiplyDouble', 246941.0,      243764.0),
+    # ('riconpacker',       332.826,      4836.58),
+    # ('jsc',               554.888,         0.00),
+    # ('boa',              1222.82,          0.00),
+    # ('rguilayout',       2155.39,          0.00),
+    # ('rfxgen',           2268.28,       5468.58),
+    # ('bullet',           2442.11,       2955.46),
+    # ('rguistyler',       2706.76,       7396.98),
+    # ('guiicons',         2752.84,       5967.73),
+    # ('funky-kart',       2931.1,        4247.15),
+    # ('sandspiel',       14846.6,           0.00),
+    # ('pathfinding'  ,   35347.8,           0.00),
+    # ('commanderkeen',   40231.0,           0.00),
+    # ('fib',            169859.0,      214271.0),
+    # ('multiplyInt',    202245.0,      184175.0),
+    # ('mandelbrot',     213539.0,      260168.0),
+    # ('multiplyDouble', 246941.0,      243764.0),
 ]
 
 input_programs = list(map(lambda ip_r: ip_r[0], input_programs_runtimes))

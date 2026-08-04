@@ -9,7 +9,7 @@ def fetch_benchmark_suite():
     # cd to working directory
     os.chdir(working_directory)
     # fetch polybench benchmark suite if not present
-    if not os.path.exists(bench_suite_uri):
+    if not os.path.exists(bench_suite_path):
         subprocess.run(['bash', '-c', f'git clone {bench_suite_uri}'])
     # cd to bench directory
     os.chdir(bench_suite_path)

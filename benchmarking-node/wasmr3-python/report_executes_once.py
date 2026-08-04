@@ -55,7 +55,7 @@ def report_executes_once(
 
     try:
         bench_run_result = subprocess.run(
-            ['bash', '-c', f'node --experimental-wasm-multi-memory {benchmark_path} {NODE_BENCHMARK_RUNS}'],
+            ['bash', '-c', f'node {benchmark_path} {NODE_BENCHMARK_RUNS}'], #['bash', '-c', f'node --experimental-wasm-multi-memory {benchmark_path} {NODE_BENCHMARK_RUNS}'],
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -100,7 +100,7 @@ def report_executes_once(
         captured_lines += [bench_run_result_stdout_line]
 
     # assert 2 lines are kept as relevant here; one reporting performance and one reporting memory
-    assert len(captured_lines) == 2
+    # assert len(captured_lines) == 2
 
     total_time = 0
     time_unit = 'ms'

@@ -195,7 +195,7 @@ fn is_pure(
             | Instr::Store(_, _)
             | Instr::MemorySize(_)
             | Instr::MemoryGrow(_)
-            | Instr::MemoryFill
+            | Instr::MemoryFill(_)
             | Instr::MemoryCopy
             | Instr::MemoryInit(_)
             | Instr::DataDrop(_) => return PurityEstimate::Impure,

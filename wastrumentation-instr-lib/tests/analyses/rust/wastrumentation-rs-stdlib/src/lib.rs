@@ -34,8 +34,9 @@ fn panic(_panic: &core::panic::PanicInfo<'_>) -> ! {
 extern "C" {
     // Base apply
     fn call_base(f_apply: i32, sigv: i32);
-    // Switch global instrumentation flag
-    fn set_instr_flag(f_index: i32, flag_value: i32);
+    // Instrumentation toggling
+    fn set_instrumentation(flag_value: i32);
+    fn set_f_instrumentation(f_index: i32, flag_value: i32);
     // Base load
     fn instrumented_base_load_i32(ptr: i32, offset: i32) -> i32;
     fn instrumented_base_load_i64(ptr: i32, offset: i32) -> i64;
@@ -327,7 +328,7 @@ impl WasmValue {
 // Functions to enable and disable the instrumentation
 pub fn set_function_instrumentation(function: FunctionIndex, flag: bool) {
     unsafe {
-        set_instr_flag(function.0, if flag { 1 } else { 0 });
+        set_f_instrumentation(function.0, if flag { 1 } else { 0 });
     }
 }
 
@@ -338,6 +339,22 @@ pub fn enable_function_instrumentation(function: FunctionIndex) {
 pub fn disable_function_instrumentation(function: FunctionIndex) {
     set_function_instrumentation(function, false);
 }
+
+// Functions to enable and disable the instrumentation
+pub fn set_global_instrumentation(flag: bool) {
+    unsafe {
+        set_instrumentation(if flag { 1 } else { 0 });
+    }
+}
+
+pub fn enable_instrumentation() {
+    set_global_instrumentation(true);
+}
+
+pub fn disable_instrumentation() {
+    set_global_instrumentation(false);
+}
+
 
 pub struct WasmFunction {
     pub f_apply: i32,

@@ -304,14 +304,15 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     }
 
     let instrumentation_library = generic_interface.as_ref().map(
-        |(generic_import, generic_export, switch_instr_flag_export)| {
+        |(generic_import, generic_export, set_f_instrumentation, set_instrumentation)| {
             function_application::instrument::<InstrumentationLanguage>(
                 &mut module,
                 &target_indices_including_imports,
                 &uninstrumented_function_indices,
                 generic_import,
                 generic_export,
-                switch_instr_flag_export,
+                set_f_instrumentation,
+                set_instrumentation,
             )
         },
     );

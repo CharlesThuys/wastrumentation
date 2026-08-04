@@ -8,7 +8,7 @@ use wasabi_wasm::Function;
 use wasabi_wasm::FunctionType;
 use wasabi_wasm::Idx;
 use wasabi_wasm::Instr;
-use wasabi_wasm::Instr::{Call, CallIndirect, Const, End, Local, RefFunc};
+use wasabi_wasm::Instr::{Call, CallIndirect, Const, End, Local, MemoryFill, RefFunc};
 use wasabi_wasm::Limits;
 use wasabi_wasm::LoadOp;
 use wasabi_wasm::LocalOp;
@@ -40,7 +40,8 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     uninstrumented_function_indices: &HashMap<Idx<Function>, Idx<Function>>,
     wasp_exported_generic_apply_trap: &WasmExport,
     wasp_imported_generic_apply_base: &WasmImport,
-    wasp_imported_switch_instrument_flag: &WasmImport,
+    wasp_imported_set_f_instrumentation: &WasmImport,
+    wasp_imported_set_instrumentation: &WasmImport,
 ) -> Library<InstrumentationLanguage> {
     // 0. GENERATE GENERIC APPLY
     let generic_apply_index = module.add_function_import(
@@ -284,8 +285,8 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         .push(wasp_imported_generic_apply_base.name.to_string());
 
     // Generate 'switch instr'
-    let switch_instrumentation_idx = module.add_function(
-        wasp_imported_switch_instrument_flag.as_function_type(),
+    let set_f_instrumentation = module.add_function(
+        wasp_imported_set_f_instrumentation.as_function_type(),
         vec![],
         vec![
             Local(LocalOp::Get, 0_usize.into()), // f_idx
@@ -298,10 +299,30 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         ],
     );
 
+    // Generate 'set_instrumentation'
+    let set_instrumentation = module.add_function(
+        wasp_imported_set_instrumentation.as_function_type(),
+        vec![],
+        vec![
+            Instr::Const(Val::I32(0)),           // memory offset
+            Local(LocalOp::Get, 0_usize.into()), // value to fill (arg)
+            Instr::Const(Val::I32(
+                pre_instrumentation_function_indices.capacity() as i32
+            )), // number of bytes to fill
+            MemoryFill(flag_memory_index.into()),
+            End,
+        ],
+    );
+
     module
-        .function_mut(switch_instrumentation_idx)
+        .function_mut(set_f_instrumentation)
         .export
-        .push(wasp_imported_switch_instrument_flag.name.to_string());
+        .push(wasp_imported_set_f_instrumentation.name.to_string());
+
+    module
+        .function_mut(set_instrumentation)
+        .export
+        .push(wasp_imported_set_instrumentation.name.to_string());
 
     library
 }

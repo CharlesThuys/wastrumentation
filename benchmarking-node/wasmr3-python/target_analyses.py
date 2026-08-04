@@ -22,8 +22,21 @@ ANALYSIS_FORWARD = 'forward'
 ANALYSIS_SAFE_HEAP = 'safe-heap'
 ANALYSIS_DENAN = 'denan'
 
+GENERIC_APPLY = 'generic-apply'
+TOGGLE_OFF = 'toggle-off'
+
 # type: [AnalysisName, WasabiHooks, WastrumentationHooks][]
 analysis_names_primitive = [
+    [
+        TOGGLE_OFF,
+        [],
+        ['generic-apply'],
+    ],
+    [
+        GENERIC_APPLY,
+        [],
+        ['generic-apply'],
+    ],
     [
         ANALYSIS_BRANCHES,
         # ✅                         ✅✅✅         ✅✅✅✅✅
