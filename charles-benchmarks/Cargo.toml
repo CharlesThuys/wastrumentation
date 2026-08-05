@@ -1,0 +1,27 @@
+[package]
+name = "charles-benchmarks"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+csv = "1.4.0"
+serde.workspace = true
+wasmtime = "47.0"
+
+rust-to-wasm-compiler = { workspace = true }
+wastrumentation = { workspace = true }
+wastrumentation-lang-assemblyscript = { workspace = true }
+wastrumentation-lang-rust = { workspace = true }
+chrono = "0.4.45"
+
+wasp-compiler = { workspace = true }
+tempfile = { workspace = true }
+bitmask = "0.5.0"
+indoc = { workspace = true }
+asc-compiler-rs = { workspace = true }
+rayon = { workspace = true }
+serde_json = { workspace = true }
+wat = { workspace = true }
+wasmtime-wasi = "47.0"
+wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
+wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
