@@ -25,3 +25,4 @@ wat = { workspace = true }
 wasmtime-wasi = "47.0"
 wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
 wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
+anyhow = "1.0.104"

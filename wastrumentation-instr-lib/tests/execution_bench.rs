@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use rayon::prelude::*;
 use rust_to_wasm_compiler::WasiSupport;
 use test_conf::{
