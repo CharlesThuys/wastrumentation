@@ -131,10 +131,9 @@ fn main() -> io::Result<()> {
     fs::create_dir(RESULT_DIR.to_owned() + &time.to_rfc3339())?;
 
     let mut size_wtr =
-        csv::Writer::from_path(RESULT_DIR.to_owned() + &time.to_rfc3339() + "/baseline_sizes.csv")?;
-    let mut wtr = csv::Writer::from_path(
-        RESULT_DIR.to_owned() + &time.to_rfc3339() + "/baseline_result.csv",
-    )?;
+        csv::Writer::from_path(RESULT_DIR.to_owned() + &time.to_rfc3339() + "/sizes.csv")?;
+    let mut wtr =
+        csv::Writer::from_path(RESULT_DIR.to_owned() + &time.to_rfc3339() + "/result.csv")?;
 
     for program_path in programs {
         // The complete WASM program as raw bytes.
@@ -195,7 +194,7 @@ fn main() -> io::Result<()> {
                     size_wtr.serialize(SizeResult {
                         bytes: instrumented.len() as u32,
                         program_name: program_name.to_string(),
-                        instrumentation: "baseline".to_string(),
+                        instrumentation: "instrumented".to_string(),
                         analysis_name: analysis_name.to_string(),
                         error: "".to_string(),
                     })?;
@@ -204,7 +203,7 @@ fn main() -> io::Result<()> {
                     size_wtr.serialize(SizeResult {
                         bytes: 0,
                         program_name: program_name.to_string(),
-                        instrumentation: "baseline".to_string(),
+                        instrumentation: "instrumented".to_string(),
                         analysis_name: analysis_name.to_string(),
                         error: err.to_string(),
                     })?;
@@ -220,7 +219,7 @@ fn main() -> io::Result<()> {
                             duration_ms: result.as_millis(),
                             duration_ns: result.as_nanos(),
                             program_name: program_name.to_string(),
-                            instrumentation: "baseline".to_string(),
+                            instrumentation: "enabled".to_string(),
                             analysis_name: analysis_name.to_string(),
                             run: run as u32,
                             error: "".to_string(),
@@ -231,7 +230,7 @@ fn main() -> io::Result<()> {
                             duration_ms: 0,
                             duration_ns: 0,
                             program_name: program_name.to_string(),
-                            instrumentation: "baseline".to_string(),
+                            instrumentation: "enabled".to_string(),
                             analysis_name: analysis_name.to_string(),
                             run: run as u32,
                             error: err.to_string(),
@@ -241,7 +240,6 @@ fn main() -> io::Result<()> {
             }
 
             // INSTRUMENTED OFF
-            /*
             for run in 0..RUNS {
                 match execute_on_wasmtime(&instrumented, true) {
                     Ok(result) => {
@@ -267,7 +265,7 @@ fn main() -> io::Result<()> {
                         })?;
                     }
                 }
-            }*/
+            }
 
             wtr.flush()?; // Ensure data is written
         }
