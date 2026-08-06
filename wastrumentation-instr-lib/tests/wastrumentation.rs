@@ -1,4 +1,4 @@
-#[allow(dead_code)]
+#![allow(dead_code)]
 use asc_compiler_rs::compiler::Compiler as AssemblyscriptCompiler;
 use asc_compiler_rs::options::CompilerOptions as AssemblyscriptCompilerOptions;
 use wastrumentation::compiler::Compiles;
