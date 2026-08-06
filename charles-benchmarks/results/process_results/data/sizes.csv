@@ -1,0 +1,7 @@
+bytes,program_name,instrumentation
+38965,factorial,uninstrumented
+279387,factorial,baseline
+1199,game-of-life,uninstrumented
+80384,game-of-life,baseline
+376838,guiicons,uninstrumented
+1968708,guiicons,baseline
