@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "app",
+    "test-library",
+]
+resolver = "3"
+
+[profile.dev]
+opt-level = 0
+debug = 2
+strip = "none"

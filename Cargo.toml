@@ -9,7 +9,7 @@ members = [
     "wastrumentation-static-analysis",
     "supported-languages/*",
     "charles-benchmarks"
-]
+, "wasm-library-test/app", "wasm-library-test/test-library"]
 
 [workspace.dependencies]
 # Crates defined as part of Wastrumentation
