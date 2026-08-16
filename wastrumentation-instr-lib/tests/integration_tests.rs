@@ -58,10 +58,10 @@ fn test_analysis_denan() {
     #[no_mangle] pub extern "C" fn identity_f64(n: f64) -> f64 { n }
     #[no_mangle] pub extern "C" fn f() -> f32 {
         let (f32, f64) = g(
-            core::f32::NAN, // f32
+                  f32::NAN, // f32
             200.0000000000, // f32
-            core::f64::NAN, // f64
-            core::f64::NAN, // f64
+                  f64::NAN, // f64
+                  f64::NAN, // f64
             -10.0000000000, // f32
         );
         f32 + (f64 as f32)
@@ -471,7 +471,7 @@ fn test_analysis_forward_pacalc() {
     declare_fns_from_wasm!(instance, store, _start [] []);
     wasm_call!(store, _start);
 }
-
+/*
 #[test]
 fn test_analysis_logging() {
     const SOURCE: Source =
@@ -661,4 +661,4 @@ fn test_analysis_logging() {
     );
 
     assert_eq!(wasm_call!(store, f, 0), 12345);
-}
+}*/

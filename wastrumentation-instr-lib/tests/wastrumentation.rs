@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use asc_compiler_rs::compiler::Compiler as AssemblyscriptCompiler;
 use asc_compiler_rs::options::CompilerOptions as AssemblyscriptCompilerOptions;
 use wastrumentation::compiler::Compiles;
@@ -49,7 +48,7 @@ const SOURCE_CODE_INPUT: &str = r#"
         return n <= 2 ? 1 : fib(n - 1) + fib(n - 2);
     }"#;
 
-//#[test]
+#[test]
 fn example_instrumentation_rust() {
     let as_compiler = AssemblyscriptCompiler::setup_compiler().unwrap();
     let as_compiler_options = AssemblyscriptCompilerOptions::default_for(SOURCE_CODE_INPUT);
@@ -93,7 +92,7 @@ fn example_instrumentation_rust() {
     }
 }
 
-//#[test]
+#[test]
 fn example_instrumentation_wasp() {
     let assemblyscript_compiler_options =
         AssemblyscriptCompilerOptions::default_for(SOURCE_CODE_INPUT.to_string());

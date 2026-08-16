@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    ffi::OsStr,
     fs, io,
     num::NonZeroUsize,
     path::{PathBuf, absolute},
@@ -28,7 +27,7 @@ use wasmtime_wasi::p1::{self as preview1, WasiP1Ctx};
 
 use chrono::Utc;
 
-const RUNS: usize = 3;
+const RUNS: usize = 30;
 const PROGRAM_DIR: &str = "../../wasm-benchmarks/wasm-r3-bench";
 const ANALYSES_DIR: &str = "input-analyses/";
 const RESULT_DIR: &str = "results/";
@@ -279,11 +278,11 @@ fn load_programs() -> io::Result<Vec<PathBuf>> {
         .filter(|path| {
             let p = path.as_ref().unwrap();
             p.is_file()
-                && (
+                /*&& (
                     p.file_name() == Some(OsStr::new("factorial.wasm"))
                         || p.file_name() == Some(OsStr::new("game-of-life.wasm"))
                     // || p.file_name() == Some(OsStr::new("guiicons.wasm"))
-                )
+                )*/
                 && p.extension().and_then(|ext| ext.to_str()) == Some("wasm")
         })
         .collect::<io::Result<Vec<_>>>()?;

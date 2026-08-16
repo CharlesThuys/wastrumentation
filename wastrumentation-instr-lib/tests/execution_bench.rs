@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use rayon::prelude::*;
 use rust_to_wasm_compiler::WasiSupport;
 use test_conf::{
@@ -25,7 +24,7 @@ use asc_compiler_rs::options::CompilerOptions as ASCompilerCompilerOptions;
 use wastrumentation_lang_rust::compile::compiler::Compiler as RSCompiler;
 use wastrumentation_lang_rust::compile::options::RustSource;
 
-//#[test]
+#[test]
 fn test_integration_configurations() {
     let test_configurations_json = include_str!("test-configurations.json");
     let test_configurations: Vec<TestConfiguration> =
