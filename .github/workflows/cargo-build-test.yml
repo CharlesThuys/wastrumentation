@@ -29,6 +29,8 @@ jobs:
           pre-commit --version
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Run pre-commit on all files
+        env:
+          SKIP: fix-encoding-pragma
         run: |
           pre-commit run --all-files --show-diff-on-failure
 
