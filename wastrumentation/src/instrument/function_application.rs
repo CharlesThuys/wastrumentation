@@ -59,14 +59,18 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         pre_instrumentation_function_indices,
     );
 
+    // 1 page = 65,536 bytes. Each function flag takes 1 byte.
+    let total_functions = pre_instrumentation_function_indices.len() as u32;
+    let required_pages = total_functions.div_ceil(65536);
+
     // Create new memory for flags
     let flag_memory = Memory::new(Limits {
-        initial_size: pre_instrumentation_function_indices.len() as u32,
+        initial_size: required_pages,
         max_size: None,
     });
     let flag_memory_index = module.memories.len() as u32;
     module.memories.push(flag_memory);
-
+    /*
     // Fill memory with initizlized flags
     module.datas.push(wasabi_wasm::Data {
         init: vec![1; pre_instrumentation_function_indices.capacity()],
@@ -78,7 +82,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
 
     // Fix data count
     module.data_count = Some(module.datas.len() as u32);
-
+    */
     // 2. Generate function instrumentation functionality
     let apply_table_index = module.tables.len();
     let mut apply_table_funs = vec![];
@@ -323,6 +327,28 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         .function_mut(set_instrumentation)
         .export
         .push(wasp_imported_set_instrumentation.name.to_string());
+
+    // Initiate flags at module instance
+    let start_idx = match module.start {
+        Some(start_idx) => start_idx,
+        None => {
+            let start_idx = module.add_function(
+                FunctionType::GoedelNumber {
+                    inputs: 0,
+                    results: 0,
+                },
+                vec![],
+                vec![End],
+            );
+            module.start = Some(start_idx);
+            start_idx
+        }
+    };
+
+    let start_function = module.function_mut(start_idx);
+    let instructions = start_function.instrs_mut().unwrap();
+    instructions.insert(0, Instr::Call(set_instrumentation));
+    instructions.insert(0, Instr::Const(Val::I32(1)));
 
     library
 }
