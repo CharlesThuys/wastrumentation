@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    ffi::OsStr,
     fs, io,
     num::NonZeroUsize,
     path::{PathBuf, absolute},
