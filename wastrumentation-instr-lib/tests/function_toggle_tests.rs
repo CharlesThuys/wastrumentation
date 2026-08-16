@@ -471,7 +471,6 @@ fn test_toggled_nested_calls_independent() {
 
     declare_fns_from_linker! { linker, store, "main",
         f [] [i32],
-        g [] [i32],
         get_function_apply_count [i32] [i32],
         set_function_enabled [i32, i32] [],
     };
