@@ -9,7 +9,7 @@ members = [
     "wastrumentation-static-analysis",
     "supported-languages/*",
     "charles-benchmarks"
-]
+, "call-graph-analysis"]
 
 [workspace.dependencies]
 # Crates defined as part of Wastrumentation
