@@ -98,15 +98,13 @@ mod tests {
     fn it_works() {
         let result = add(2, 2);
         assert_eq!(result, 4);
-        let call_graph =
-            get_callgraph_text("/Users/charles/Documents/wasm-benchmarks/wasm-r3-bench/fib.wasm")
-                .unwrap();
+        let call_graph = get_callgraph_text("./fib.wasm").unwrap();
         println!("{:?}", call_graph)
     }
 
     #[test]
     fn test_dominator_analysis() {
-        let wasm_path = "/Users/charles/Documents/wasm-benchmarks/wasm-r3-bench/fib.wasm";
+        let wasm_path = "./fib.wasm";
         let wasm_bytes = fs::read(wasm_path).expect("Failed to read Wasm file");
 
         // 1. Capture stdout from Wassail (using our tempfile wrapper)

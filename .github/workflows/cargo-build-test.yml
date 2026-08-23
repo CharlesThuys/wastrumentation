@@ -58,6 +58,21 @@ jobs:
         run: ~/.bun/bin/bun --version
       - name: Install Assemblyscript compiler
         run: ~/.bun/bin/bun install assemblyscript@${ASSEMBLYSCRIPT_VERSION}/asc
+      - name: Install Bubblewrap
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 4.14.x
+      - name: Add Opam to PATH
+        run: echo "$(opam var bin)" >> $GITHUB_PATH
+      - name: Install Wassail
+        run: |
+          opam install --yes core_unix dune
+          git clone https://github.com/acieroid/wassail.git
+          cd wassail
+          opam install --yes .
+          opam pin add --yes .
       - name: Build all targets with all features
         run: cargo build
         shell: bash
