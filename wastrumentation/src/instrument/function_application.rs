@@ -42,6 +42,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     wasp_imported_generic_apply_base: &WasmImport,
     wasp_imported_set_f_instrumentation: &WasmImport,
     wasp_imported_set_instrumentation: &WasmImport,
+    start_disabled: bool  
 ) -> Library<InstrumentationLanguage> {
     // 0. GENERATE GENERIC APPLY
     let generic_apply_index = module.add_function_import(
@@ -348,7 +349,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     let start_function = module.function_mut(start_idx);
     let instructions = start_function.instrs_mut().unwrap();
     instructions.insert(0, Instr::Call(set_instrumentation));
-    instructions.insert(0, Instr::Const(Val::I32(1)));
-
+    // Depends on if you start with instrumentation on or off
+    instructions.insert(0, Instr::Const(Val::I32(!start_disabled as i32)));
     library
 }

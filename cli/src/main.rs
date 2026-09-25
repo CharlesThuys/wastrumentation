@@ -133,6 +133,7 @@ fn main() -> anyhow::Result<()> {
     let configuration = Configuration {
         target_indices: targets,
         primary_selection: None,
+        start_disabled: false
     };
 
     let instrumented_wasm_module = Wastrumenter::new(

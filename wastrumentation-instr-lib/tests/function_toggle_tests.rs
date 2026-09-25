@@ -138,6 +138,7 @@ fn test_toggle_and_preserve_result() {
     let configuration = Configuration {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Analysis),
+        start_disabled: false
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
@@ -240,6 +241,7 @@ fn test_hooks_suppressed() {
     let configuration = Configuration {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Analysis),
+        start_disabled: false
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
@@ -332,6 +334,7 @@ fn test_reenable_instrumentation() {
     let configuration = Configuration {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Analysis),
+        start_disabled: false
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
@@ -430,6 +433,7 @@ fn test_toggled_nested_calls_independent() {
     let configuration = Configuration {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Analysis),
+        start_disabled: false
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());

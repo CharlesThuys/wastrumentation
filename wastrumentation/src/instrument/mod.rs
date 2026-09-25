@@ -42,6 +42,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     module: &[u8],
     analysis_interface: &AnalysisInterface,
     target_indices: &Option<Vec<u32>>,
+    start_disabled: bool
 ) -> Result<Instrumented<InstrumentationLanguage>, InstrumentationError> {
     let AnalysisInterface {
         generic_interface,
@@ -313,6 +314,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
                 generic_export,
                 set_f_instrumentation,
                 set_instrumentation,
+                start_disabled
             )
         },
     );
