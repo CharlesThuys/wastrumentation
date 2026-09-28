@@ -1,0 +1,217 @@
+duration_ms,duration_ns,program_name,instrumentation,analysis_name,run,error,platform
+0,89720,factorial,uninstrumented,,0,,wasmtime
+0,115000,factorial,uninstrumented,,1,,wasmtime
+0,70080,factorial,uninstrumented,,2,,wasmtime
+8,8502428,factorial,uninstrumented,,0,,wizard
+3,3214261,factorial,uninstrumented,,1,,wizard
+3,3126570,factorial,uninstrumented,,2,,wizard
+256,256783377,factorial,uninstrumented,,0,,wasmer
+17,17475677,factorial,uninstrumented,,1,,wasmer
+18,18716911,factorial,uninstrumented,,2,,wasmer
+0,114520,factorial,enabled,forward,0,,wasmtime
+0,117401,factorial,enabled,forward,1,,wasmtime
+0,120550,factorial,enabled,forward,2,,wasmtime
+0,37930,factorial,disabled,forward,0,,wasmtime
+0,38180,factorial,disabled,forward,1,,wasmtime
+0,38310,factorial,disabled,forward,2,,wasmtime
+22,22509724,factorial,enabled,forward,0,,wizard
+14,14032546,factorial,enabled,forward,1,,wizard
+14,14060306,factorial,enabled,forward,2,,wizard
+22,22332253,factorial,disabled,forward,0,,wizard
+21,21660911,factorial,disabled,forward,1,,wizard
+13,13435644,factorial,disabled,forward,2,,wizard
+157,157899809,factorial,enabled,forward,0,,wasmer
+33,33987772,factorial,enabled,forward,1,,wasmer
+26,26008625,factorial,enabled,forward,2,,wasmer
+120,120191755,factorial,disabled,forward,0,,wasmer
+30,30302230,factorial,disabled,forward,1,,wasmer
+26,26002445,factorial,disabled,forward,2,,wasmer
+0,70020,factorial,enabled,generic-apply,0,,wasmtime
+0,69800,factorial,enabled,generic-apply,1,,wasmtime
+0,106110,factorial,enabled,generic-apply,2,,wasmtime
+0,47160,factorial,disabled,generic-apply,0,,wasmtime
+0,47090,factorial,disabled,generic-apply,1,,wasmtime
+0,41630,factorial,disabled,generic-apply,2,,wasmtime
+8,8270437,factorial,enabled,generic-apply,0,,wizard
+7,7556585,factorial,enabled,generic-apply,1,,wizard
+7,7915866,factorial,enabled,generic-apply,2,,wizard
+7,7478785,factorial,disabled,generic-apply,0,,wizard
+7,7356364,factorial,disabled,generic-apply,1,,wizard
+7,7505425,factorial,disabled,generic-apply,2,,wizard
+88,88300491,factorial,enabled,generic-apply,0,,wasmer
+21,21914482,factorial,enabled,generic-apply,1,,wasmer
+29,29892788,factorial,enabled,generic-apply,2,,wasmer
+101,101848886,factorial,disabled,generic-apply,0,,wasmer
+27,27297680,factorial,disabled,generic-apply,1,,wasmer
+21,21231200,factorial,disabled,generic-apply,2,,wasmer
+0,81610,factorial,enabled,pure-functions-memoization,0,,wasmtime
+0,103721,factorial,enabled,pure-functions-memoization,1,,wasmtime
+0,90970,factorial,enabled,pure-functions-memoization,2,,wasmtime
+0,38950,factorial,disabled,pure-functions-memoization,0,,wasmtime
+0,39880,factorial,disabled,pure-functions-memoization,1,,wasmtime
+0,48800,factorial,disabled,pure-functions-memoization,2,,wasmtime
+13,13538544,factorial,enabled,pure-functions-memoization,0,,wizard
+14,14306538,factorial,enabled,pure-functions-memoization,1,,wizard
+13,13606135,factorial,enabled,pure-functions-memoization,2,,wizard
+13,13484145,factorial,disabled,pure-functions-memoization,0,,wizard
+12,12964393,factorial,disabled,pure-functions-memoization,1,,wizard
+12,12941933,factorial,disabled,pure-functions-memoization,2,,wizard
+94,94839714,factorial,enabled,pure-functions-memoization,0,,wasmer
+24,24036419,factorial,enabled,pure-functions-memoization,1,,wasmer
+25,25274093,factorial,enabled,pure-functions-memoization,2,,wasmer
+80,80784627,factorial,disabled,pure-functions-memoization,0,,wasmer
+22,22651885,factorial,disabled,pure-functions-memoization,1,,wasmer
+22,22806186,factorial,disabled,pure-functions-memoization,2,,wasmer
+68,68255347,rfxgen,uninstrumented,,0,,wasmtime
+65,65230987,rfxgen,uninstrumented,,1,,wasmtime
+70,70352394,rfxgen,uninstrumented,,2,,wasmtime
+820,820734583,rfxgen,uninstrumented,,0,,wizard
+875,875362825,rfxgen,uninstrumented,,1,,wizard
+831,831735300,rfxgen,uninstrumented,,2,,wizard
+503,503760948,rfxgen,uninstrumented,,0,,wasmer
+109,109997796,rfxgen,uninstrumented,,1,,wasmer
+113,113319148,rfxgen,uninstrumented,,2,,wasmer
+4413,4413815981,rfxgen,enabled,forward,0,,wasmtime
+4396,4396138644,rfxgen,enabled,forward,1,,wasmtime
+4358,4358670855,rfxgen,enabled,forward,2,,wasmtime
+68,68514903,rfxgen,disabled,forward,0,,wasmtime
+69,69044268,rfxgen,disabled,forward,1,,wasmtime
+70,70482445,rfxgen,disabled,forward,2,,wasmtime
+79745,79745329652,rfxgen,enabled,forward,0,,wizard
+79650,79650671616,rfxgen,enabled,forward,1,,wizard
+79300,79300818330,rfxgen,enabled,forward,2,,wizard
+973,973246616,rfxgen,disabled,forward,0,,wizard
+966,966995893,rfxgen,disabled,forward,1,,wizard
+970,970450666,rfxgen,disabled,forward,2,,wizard
+6633,6633879229,rfxgen,enabled,forward,0,,wasmer
+4255,4255179507,rfxgen,enabled,forward,1,,wasmer
+4309,4309813633,rfxgen,enabled,forward,2,,wasmer
+2509,2509792028,rfxgen,disabled,forward,0,,wasmer
+187,187538512,rfxgen,disabled,forward,1,,wasmer
+178,178997180,rfxgen,disabled,forward,2,,wasmer
+136,136046183,rfxgen,enabled,generic-apply,0,,wasmtime
+130,130083832,rfxgen,enabled,generic-apply,1,,wasmtime
+130,130861855,rfxgen,enabled,generic-apply,2,,wasmtime
+77,77588607,rfxgen,disabled,generic-apply,0,,wasmtime
+69,69534123,rfxgen,disabled,generic-apply,1,,wasmtime
+69,69978918,rfxgen,disabled,generic-apply,2,,wasmtime
+2929,2929754593,rfxgen,enabled,generic-apply,0,,wizard
+2942,2942972369,rfxgen,enabled,generic-apply,1,,wizard
+2952,2952433057,rfxgen,enabled,generic-apply,2,,wizard
+917,917219643,rfxgen,disabled,generic-apply,0,,wizard
+882,882482398,rfxgen,disabled,generic-apply,1,,wizard
+910,910562523,rfxgen,disabled,generic-apply,2,,wizard
+700,700245606,rfxgen,enabled,generic-apply,0,,wasmer
+188,188378502,rfxgen,enabled,generic-apply,1,,wasmer
+193,193406201,rfxgen,enabled,generic-apply,2,,wasmer
+652,652419749,rfxgen,disabled,generic-apply,0,,wasmer
+127,127070638,rfxgen,disabled,generic-apply,1,,wasmer
+135,135355178,rfxgen,disabled,generic-apply,2,,wasmer
+0,0,rfxgen,enabled,pure-functions-memoization,0,"error while executing at wasm backtrace:
+    0:  0x6779e - !<wasm function 24>
+    1:  0xe1a3e - !<wasm function 2278>
+    2:  0xe2be4 - !<wasm function 2623>
+    3:  0x69d04 - !<wasm function 26>
+    4:  0xdf4b6 - !<wasm function 1747>
+    5:  0xd8eb1 - !<wasm function 1146>
+    6:  0xe2cf8 - !<wasm function 2650>
+    7:  0xe08cb - !<wasm function 1975>
+    8:  0xe2be4 - !<wasm function 2623>
+    9:  0x69d04 - !<wasm function 26>
+   10:  0xdf4b6 - !<wasm function 1747>
+   11:  0xd7432 - !<wasm function 1046>
+   12:  0x484b2 - !<wasm function 8>
+   13:  0xdf237 - !<wasm function 1722>
+   14:  0xe2be4 - !<wasm function 2623>
+   15:  0x69d04 - !<wasm function 26>
+   16:  0xdf4b6 - !<wasm function 1747>
+   17:  0xd4e9d - !<wasm function 911>
+   18:  0x23d53 - !<wasm function 5>
+   19:  0xe0716 - !<wasm function 1954>
+   20:  0xe2be4 - !<wasm function 2623>
+   21:  0x6a52a - !<wasm function 26>
+   22:  0xdf4b6 - !<wasm function 1747>
+   23:  0xd7b1e - !<wasm function 1071>
+   24:  0xbe70e - !<wasm function 288>
+   25:  0xe2a31 - !<wasm function 2583>
+   26:  0xe2be4 - !<wasm function 2623>
+   27:  0x6a52a - !<wasm function 26>
+   28:  0xdf4b6 - !<wasm function 1747>
+   29:  0xdc54f - !<wasm function 1369>",wasmtime
+0,0,rfxgen,enabled,pure-functions-memoization,1,"error while executing at wasm backtrace:
+    0:  0x6779e - !<wasm function 24>
+    1:  0xe1a3e - !<wasm function 2278>
+    2:  0xe2be4 - !<wasm function 2623>
+    3:  0x69d04 - !<wasm function 26>
+    4:  0xdf4b6 - !<wasm function 1747>
+    5:  0xd8eb1 - !<wasm function 1146>
+    6:  0xe2cf8 - !<wasm function 2650>
+    7:  0xe08cb - !<wasm function 1975>
+    8:  0xe2be4 - !<wasm function 2623>
+    9:  0x69d04 - !<wasm function 26>
+   10:  0xdf4b6 - !<wasm function 1747>
+   11:  0xd7432 - !<wasm function 1046>
+   12:  0x484b2 - !<wasm function 8>
+   13:  0xdf237 - !<wasm function 1722>
+   14:  0xe2be4 - !<wasm function 2623>
+   15:  0x69d04 - !<wasm function 26>
+   16:  0xdf4b6 - !<wasm function 1747>
+   17:  0xd4e9d - !<wasm function 911>
+   18:  0x23d53 - !<wasm function 5>
+   19:  0xe0716 - !<wasm function 1954>
+   20:  0xe2be4 - !<wasm function 2623>
+   21:  0x6a52a - !<wasm function 26>
+   22:  0xdf4b6 - !<wasm function 1747>
+   23:  0xd7b1e - !<wasm function 1071>
+   24:  0xbe70e - !<wasm function 288>
+   25:  0xe2a31 - !<wasm function 2583>
+   26:  0xe2be4 - !<wasm function 2623>
+   27:  0x6a52a - !<wasm function 26>
+   28:  0xdf4b6 - !<wasm function 1747>
+   29:  0xdc54f - !<wasm function 1369>",wasmtime
+0,0,rfxgen,enabled,pure-functions-memoization,2,"error while executing at wasm backtrace:
+    0:  0x6779e - !<wasm function 24>
+    1:  0xe1a3e - !<wasm function 2278>
+    2:  0xe2be4 - !<wasm function 2623>
+    3:  0x69d04 - !<wasm function 26>
+    4:  0xdf4b6 - !<wasm function 1747>
+    5:  0xd8eb1 - !<wasm function 1146>
+    6:  0xe2cf8 - !<wasm function 2650>
+    7:  0xe08cb - !<wasm function 1975>
+    8:  0xe2be4 - !<wasm function 2623>
+    9:  0x69d04 - !<wasm function 26>
+   10:  0xdf4b6 - !<wasm function 1747>
+   11:  0xd7432 - !<wasm function 1046>
+   12:  0x484b2 - !<wasm function 8>
+   13:  0xdf237 - !<wasm function 1722>
+   14:  0xe2be4 - !<wasm function 2623>
+   15:  0x69d04 - !<wasm function 26>
+   16:  0xdf4b6 - !<wasm function 1747>
+   17:  0xd4e9d - !<wasm function 911>
+   18:  0x23d53 - !<wasm function 5>
+   19:  0xe0716 - !<wasm function 1954>
+   20:  0xe2be4 - !<wasm function 2623>
+   21:  0x6a52a - !<wasm function 26>
+   22:  0xdf4b6 - !<wasm function 1747>
+   23:  0xd7b1e - !<wasm function 1071>
+   24:  0xbe70e - !<wasm function 288>
+   25:  0xe2a31 - !<wasm function 2583>
+   26:  0xe2be4 - !<wasm function 2623>
+   27:  0x6a52a - !<wasm function 26>
+   28:  0xdf4b6 - !<wasm function 1747>
+   29:  0xdc54f - !<wasm function 1369>",wasmtime
+68,68699713,rfxgen,disabled,pure-functions-memoization,0,,wasmtime
+70,70275643,rfxgen,disabled,pure-functions-memoization,1,,wasmtime
+74,74498713,rfxgen,disabled,pure-functions-memoization,2,,wasmtime
+78,78298589,rfxgen,enabled,pure-functions-memoization,0,,wizard
+74,74313501,rfxgen,enabled,pure-functions-memoization,1,,wizard
+73,73258325,rfxgen,enabled,pure-functions-memoization,2,,wizard
+874,874039933,rfxgen,disabled,pure-functions-memoization,0,,wizard
+901,901015041,rfxgen,disabled,pure-functions-memoization,1,,wizard
+887,887742575,rfxgen,disabled,pure-functions-memoization,2,,wizard
+546,546490548,rfxgen,enabled,pure-functions-memoization,0,,wasmer
+50,50942418,rfxgen,enabled,pure-functions-memoization,1,,wasmer
+53,53935461,rfxgen,enabled,pure-functions-memoization,2,,wasmer
+655,655832024,rfxgen,disabled,pure-functions-memoization,0,,wasmer
+124,124027424,rfxgen,disabled,pure-functions-memoization,1,,wasmer
+124,124601343,rfxgen,disabled,pure-functions-memoization,2,,wasmer

@@ -30,6 +30,10 @@ struct Args {
     #[arg(long, required = false, num_args = 1..)]
     targets: Option<Vec<u32>>,
 
+    // Start with the instrumentation disabled
+    #[arg(short, long)]
+    start_disabled: bool,
+
     /// Output path for the instrumented module
     #[arg(short, long)]
     output_path: Output,
@@ -109,6 +113,7 @@ fn main() -> anyhow::Result<()> {
         mut output_path,
         hooks,
         targets,
+        start_disabled,
     } = Args::parse();
 
     let mut wasm_module = Vec::new();
@@ -133,7 +138,7 @@ fn main() -> anyhow::Result<()> {
     let configuration = Configuration {
         target_indices: targets,
         primary_selection: None,
-        start_disabled: false
+        start_disabled: start_disabled,
     };
 
     let instrumented_wasm_module = Wastrumenter::new(

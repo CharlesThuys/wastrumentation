@@ -191,8 +191,6 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
 
         let mut instrumented_body = Vec::new();
 
-        // instrumented_body.extend(push_args_on_stack);
-
         instrumented_body.extend_from_slice(&[
             const_instrumented_function_index.clone(),
             // --- load flag ---

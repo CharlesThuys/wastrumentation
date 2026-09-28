@@ -11,6 +11,7 @@ const BENCH_NAME: &str = "desktop-linux";
 fn main() -> io::Result<()> {
     let programs = load_programs()?;
     let analyses = load_analyses()?;
+    let platforms = ["wasmtime", "wizard", "wasmer"];
 
     let time = Utc::now();
     fs::create_dir(RESULT_DIR.to_owned() + BENCH_NAME + &time.to_rfc3339())?;
@@ -35,17 +36,13 @@ fn main() -> io::Result<()> {
             error: "".to_string(),
         })?;
         size_wtr.flush()?;
-        // Run wasmtime
-        for run in 0..RUNS {
-            let result = run_bench("wasmtime", program_name, &program, "", "uninstrumented", run as u32);
+        
+        for platform in platforms {
+            for run in 0..RUNS {
+            let result = run_bench(platform, program_name, &program, "", "uninstrumented", run as u32);
             wtr.serialize(result)?;
             wtr.flush()?;
-        }
-        // Run wizard
-        for run in 0..RUNS {
-            let result = run_bench("wizard", program_name, &program, "", "uninstrumented", run as u32);
-            wtr.serialize(result)?;
-            wtr.flush()?;
+            }
         }
 
         for analysis_path in &analyses {
@@ -78,34 +75,22 @@ fn main() -> io::Result<()> {
             }
             size_wtr.flush()?;
 
-            // START ENABLED   
-            // Run wasmtime
-            for run in 0..RUNS {
-                let result = run_bench("wasmtime", program_name, &instrumented, analysis_name, "enabled", run as u32);
-                wtr.serialize(result)?;
-                wtr.flush()?;
-            }
-            // Run wizard
-            for run in 0..RUNS {
-                let result = run_bench("wizard", program_name, &instrumented, analysis_name, "enabled", run as u32);
-                wtr.serialize(result)?;
-                wtr.flush()?;
-            }
-            // START DISABLED
-            instrumented = instrument(&program, analysis_name, true).unwrap();
-            // Run wasmtime
-            for run in 0..RUNS {
-                let result = run_bench("wasmtime", program_name, &instrumented, analysis_name, "disabled", run as u32);
-                wtr.serialize(result)?;
-                wtr.flush()?;
-            }
-            // Run wizard
-            for run in 0..RUNS {
-                let result = run_bench("wizard", program_name, &instrumented, analysis_name, "disabled", run as u32);
-                wtr.serialize(result)?;
-                wtr.flush()?;
-            }
+            
+            let disabled = instrument(&program, analysis_name, true).unwrap();
 
+            for platform in platforms {
+                for run in 0..RUNS {
+                    let result = run_bench(platform, program_name, &instrumented, analysis_name, "enabled", run as u32);
+                    wtr.serialize(result)?;
+                    wtr.flush()?;
+                }
+                for run in 0..RUNS {
+                    let result = run_bench(platform, program_name, &disabled, analysis_name, "disabled", run as u32);
+                    wtr.serialize(result)?;
+                    wtr.flush()?;
+                }
+            }
+            
             wtr.flush()?;
         }
     }

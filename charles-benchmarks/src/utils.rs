@@ -33,6 +33,8 @@ use wasmtime_wasi::p1::{self as preview1, WasiP1Ctx};
 pub static PROGRAM_DIR: &str = "input-programs/wasm-r3-bench";
 pub static ANALYSES_DIR: &str = "input-analyses/";
 
+const PROGRAMS: [&str; 2] = ["factorial", "rfxgen"];
+const ANALYSES: [&str; 2] = ["forward", "generic-apply"]; // , "pure-functions-memoization", "signatures-check"];
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BenchmarkResult {
@@ -57,7 +59,6 @@ pub struct SizeResult {
 
 pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
     let mut config = Config::new();
-
     config.wasm_backtrace_max_frames(Some(NonZeroUsize::new(100).unwrap()));
 
     let engine = Engine::new(&config)?;
@@ -76,28 +77,44 @@ pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
     Ok(Instant::now() - start_time)
+    /*
+    let mut config = Config::default();
+    config.cranelift_opt_level(wasmtime::OptLevel::SpeedAndSize);
+
+    let engine = Engine::new(&config)?;
+    let module = Module::from_binary(&engine, &program)?;
+    let mut store = Store::new(&engine, ());
+    let instance = Instance::new(&mut store, &module, &[]).unwrap();
+    let start_function = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
+
+    let start_time = Instant::now();
+    start_function.call(&mut store, ())?;
+    Ok(Instant::now() - start_time) */
 }
 
 pub fn execute_on_wizard(program: &[u8]) -> Result<Duration> {
-    
-
     let temp_file = Builder::new().suffix(".wasm").tempfile()?;
     let temp_path = temp_file.path().to_str().expect("Invalid temp path");
-
     fs::write(temp_path, program)?;
 
     let start_time = Instant::now();
-
-    let status = Command::new("wizeng")
+    Command::new("wizeng")
+        .arg("--ext:multi-memory")
         .arg(temp_path)
         .status()?;
+    Ok(Instant::now() - start_time)
+}
 
-    let duration = start_time.elapsed();
-    if status.success() {
-        Ok(duration)
-    } else {
-        panic!()
-    }
+pub fn execute_on_wasmer(program: &[u8]) -> Result<Duration> {
+    let temp_file = Builder::new().suffix(".wasm").tempfile()?;
+    let temp_path = temp_file.path().to_str().expect("Invalid temp path");
+    fs::write(temp_path, program)?;
+
+    let start_time = Instant::now();
+    Command::new("wasmer")
+        .arg(temp_path)
+        .status()?;
+    Ok(Instant::now() - start_time)
 }
 
 pub fn run_bench(platform: &str, program_name: &str,  program: &[u8], analysis_name: &str, instrumentation: &str, run: u32) -> BenchmarkResult {
@@ -106,6 +123,7 @@ pub fn run_bench(platform: &str, program_name: &str,  program: &[u8], analysis_n
     match platform {
         "wizard" => result = execute_on_wizard(program),
         "wasmtime" => result = execute_on_wasmtime(program),
+        "wasmer" => result = execute_on_wasmer(program),
         _ => result = Err(anyhow!("Unkown execution platform: {}", platform))
     }
 
@@ -143,23 +161,23 @@ pub fn load_programs() -> io::Result<Vec<PathBuf>> {
         .filter(|path| {
             let p = path.as_ref().unwrap();
             p.is_file()
-                && (
-                    p.file_name() == Some(OsStr::new("factorial.wasm"))
-                        || p.file_name() == Some(OsStr::new("game-of-life.wasm"))
-                        //|| p.file_name() == Some(OsStr::new("ffmpeg.wasm"))
-                )
-                && p.extension().and_then(|ext| ext.to_str()) == Some("wasm")
+            && PROGRAMS.contains(&p.file_stem().unwrap().to_str().unwrap())
+            && p.extension().unwrap() == "wasm"
         })
         .collect::<io::Result<Vec<_>>>()?;
-
     paths.sort();
+
     Ok(paths)
 }
 
 pub fn load_analyses() -> io::Result<Vec<PathBuf>> {
     let mut paths = fs::read_dir(ANALYSES_DIR)?
         .map(|entry| entry.map(|entry| entry.path()))
-        .filter(|path| path.as_ref().unwrap().is_dir())
+        .filter(|path| {
+            let p =  path.as_ref().unwrap();
+            ANALYSES.contains(&p.file_name().unwrap().to_str().unwrap())
+            && p.is_dir()
+        })
         .collect::<io::Result<Vec<_>>>()?;
 
     paths.sort();
@@ -170,6 +188,8 @@ pub fn instrument(input_program: &[u8], analysis: &str, disable: bool) -> Result
     let analysis_hooks: HashMap<&'static str, HashSet<Hook>> = HashMap::from([
         ("generic-apply", HashSet::from([Hook::GenericApply])),
         ("forward", Hook::all_hooks()),
+        ("pure-functions-memoization", HashSet::from([Hook::GenericApply])),
+        ("signatures-check", HashSet::from([Hook::GenericApply])),
     ]);
 
     let analysis_compiler = Compiler::setup_compiler()?;

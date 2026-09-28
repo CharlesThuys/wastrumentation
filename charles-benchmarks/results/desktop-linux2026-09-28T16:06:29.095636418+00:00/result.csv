@@ -1,0 +1,245 @@
+duration_ms,duration_ns,program_name,instrumentation,analysis_name,run,error,platform
+0,94251,factorial,uninstrumented,,0,,wasmtime
+0,99281,factorial,uninstrumented,,1,,wasmtime
+0,103270,factorial,uninstrumented,,2,,wasmtime
+5,5237133,factorial,uninstrumented,,0,,wizard
+3,3267667,factorial,uninstrumented,,1,,wizard
+3,3123946,factorial,uninstrumented,,2,,wizard
+156,156813399,factorial,uninstrumented,,0,,wasmer
+19,19028680,factorial,uninstrumented,,1,,wasmer
+17,17776810,factorial,uninstrumented,,2,,wasmer
+0,119931,factorial,enabled,forward,0,,wasmtime
+0,150651,factorial,enabled,forward,1,,wasmtime
+0,115531,factorial,enabled,forward,2,,wasmtime
+0,37720,factorial,disabled,forward,0,,wasmtime
+0,39541,factorial,disabled,forward,1,,wasmtime
+0,41251,factorial,disabled,forward,2,,wasmtime
+25,25228887,factorial,enabled,forward,0,,wizard
+23,23432762,factorial,enabled,forward,1,,wizard
+15,15104914,factorial,enabled,forward,2,,wizard
+15,15366936,factorial,disabled,forward,0,,wizard
+27,27375555,factorial,disabled,forward,1,,wizard
+17,17092540,factorial,disabled,forward,2,,wizard
+174,174012122,factorial,enabled,forward,0,,wasmer
+24,24725133,factorial,enabled,forward,1,,wasmer
+27,27381495,factorial,enabled,forward,2,,wasmer
+144,144709140,factorial,disabled,forward,0,,wasmer
+25,25895113,factorial,disabled,forward,1,,wasmer
+28,28856147,factorial,disabled,forward,2,,wasmer
+0,72120,factorial,enabled,generic-apply,0,,wasmtime
+0,86521,factorial,enabled,generic-apply,1,,wasmtime
+0,87601,factorial,enabled,generic-apply,2,,wasmtime
+0,42141,factorial,disabled,generic-apply,0,,wasmtime
+0,49300,factorial,disabled,generic-apply,1,,wasmtime
+0,40491,factorial,disabled,generic-apply,2,,wasmtime
+12,12631463,factorial,enabled,generic-apply,0,,wizard
+12,12073348,factorial,enabled,generic-apply,1,,wizard
+8,8689561,factorial,enabled,generic-apply,2,,wizard
+11,11994608,factorial,disabled,generic-apply,0,,wizard
+12,12090828,factorial,disabled,generic-apply,1,,wizard
+11,11792376,factorial,disabled,generic-apply,2,,wizard
+120,120697713,factorial,enabled,generic-apply,0,,wasmer
+23,23418761,factorial,enabled,generic-apply,1,,wasmer
+28,28554853,factorial,enabled,generic-apply,2,,wasmer
+91,91707747,factorial,disabled,generic-apply,0,,wasmer
+23,23979586,factorial,disabled,generic-apply,1,,wasmer
+23,23635642,factorial,disabled,generic-apply,2,,wasmer
+0,87241,factorial,enabled,pure-functions-memoization,0,,wasmtime
+0,95061,factorial,enabled,pure-functions-memoization,1,,wasmtime
+0,84961,factorial,enabled,pure-functions-memoization,2,,wasmtime
+0,48990,factorial,disabled,pure-functions-memoization,0,,wasmtime
+0,38361,factorial,disabled,pure-functions-memoization,1,,wasmtime
+0,38270,factorial,disabled,pure-functions-memoization,2,,wasmtime
+7,7925394,factorial,enabled,pure-functions-memoization,0,,wizard
+7,7723352,factorial,enabled,pure-functions-memoization,1,,wizard
+7,7689142,factorial,enabled,pure-functions-memoization,2,,wizard
+7,7397920,factorial,disabled,pure-functions-memoization,0,,wizard
+7,7459750,factorial,disabled,pure-functions-memoization,1,,wizard
+6,6671223,factorial,disabled,pure-functions-memoization,2,,wizard
+83,83225242,factorial,enabled,pure-functions-memoization,0,,wasmer
+22,22355411,factorial,enabled,pure-functions-memoization,1,,wasmer
+22,22903175,factorial,enabled,pure-functions-memoization,2,,wasmer
+94,94380932,factorial,disabled,pure-functions-memoization,0,,wasmer
+21,21660394,factorial,disabled,pure-functions-memoization,1,,wasmer
+21,21927327,factorial,disabled,pure-functions-memoization,2,,wasmer
+0,0,factorial,enabled,signatures-check,0,"error while executing at wasm backtrace:
+    0:  0x1be00 - !<wasm function 672>
+    1:  0x1bd64 - !<wasm function 654>
+    2:  0x1bd5d - !<wasm function 653>
+    3:  0x1bd3d - !<wasm function 649>
+    4:  0x1bd7d - !<wasm function 657>
+    5:  0x1bd56 - !<wasm function 652>
+    6:   0x564f - !<wasm function 10>
+    7:  0x16aae - !<wasm function 170>
+    8:  0x1bc90 - !<wasm function 631>
+    9:  0x1a9f5 - !<wasm function 376>
+   10:  0x193b8 - !<wasm function 286>
+   11:  0x1ae30 - !<wasm function 411>
+   12:   0x7295 - !<wasm function 16>
+   13:  0x1ae90 - !<wasm function 415>
+   14:  0x18701 - !<wasm function 240>
+   15:  0x10841 - !<wasm function 68>
+   16:  0x1aec2 - !<wasm function 417>
+   17:  0x1bc13 - !<wasm function 619>
+   18:   0x701b - !<wasm function 16>
+   19:  0x1ae90 - !<wasm function 415>
+   20:  0x19189 - !<wasm function 278>
+   21:  0x1b5c1 - !<wasm function 502>
+   22:  0x1ad84 - !<wasm function 404>
+   23:  0x1bc13 - !<wasm function 619>
+   24:   0x701b - !<wasm function 16>
+   25:  0x1ae90 - !<wasm function 415>
+   26:  0x18b0a - !<wasm function 254>
+   27:   0x9371 - !<wasm function 23>
+   28:  0x1af0e - !<wasm function 420>
+   29:  0x1bc13 - !<wasm function 619>
+   30:   0x701b - !<wasm function 16>
+   31:  0x1ae90 - !<wasm function 415>
+   32:  0x188bb - !<wasm function 246>
+   33:   0xfc79 - !<wasm function 61>
+   34:  0x1b2a8 - !<wasm function 462>
+   35:  0x1bc13 - !<wasm function 619>
+   36:   0x701b - !<wasm function 16>
+   37:  0x1ae90 - !<wasm function 415>
+   38:  0x19edc - !<wasm function 329>
+   39:   0xf2c2 - !<wasm function 56>
+   40:  0x1b6cb - !<wasm function 518>
+   41:  0x1bc13 - !<wasm function 619>
+   42:   0x701b - !<wasm function 16>
+   43:  0x1ae90 - !<wasm function 415>
+   44:  0x19dd0 - !<wasm function 325>
+   45:  0x1baa3 - !<wasm function 586>
+   46:  0x1bcee - !<wasm function 640>
+   47:  0x1bc13 - !<wasm function 619>
+   48:   0x701b - !<wasm function 16>
+   49:  0x1ae90 - !<wasm function 415>
+   50:  0x1a91d - !<wasm function 372>",wasmtime
+0,0,factorial,enabled,signatures-check,1,"error while executing at wasm backtrace:
+    0:  0x1be00 - !<wasm function 672>
+    1:  0x1bd64 - !<wasm function 654>
+    2:  0x1bd5d - !<wasm function 653>
+    3:  0x1bd3d - !<wasm function 649>
+    4:  0x1bd7d - !<wasm function 657>
+    5:  0x1bd56 - !<wasm function 652>
+    6:   0x564f - !<wasm function 10>
+    7:  0x16aae - !<wasm function 170>
+    8:  0x1bc90 - !<wasm function 631>
+    9:  0x1a9f5 - !<wasm function 376>
+   10:  0x193b8 - !<wasm function 286>
+   11:  0x1ae30 - !<wasm function 411>
+   12:   0x7295 - !<wasm function 16>
+   13:  0x1ae90 - !<wasm function 415>
+   14:  0x18701 - !<wasm function 240>
+   15:  0x10841 - !<wasm function 68>
+   16:  0x1aec2 - !<wasm function 417>
+   17:  0x1bc13 - !<wasm function 619>
+   18:   0x701b - !<wasm function 16>
+   19:  0x1ae90 - !<wasm function 415>
+   20:  0x19189 - !<wasm function 278>
+   21:  0x1b5c1 - !<wasm function 502>
+   22:  0x1ad84 - !<wasm function 404>
+   23:  0x1bc13 - !<wasm function 619>
+   24:   0x701b - !<wasm function 16>
+   25:  0x1ae90 - !<wasm function 415>
+   26:  0x18b0a - !<wasm function 254>
+   27:   0x9371 - !<wasm function 23>
+   28:  0x1af0e - !<wasm function 420>
+   29:  0x1bc13 - !<wasm function 619>
+   30:   0x701b - !<wasm function 16>
+   31:  0x1ae90 - !<wasm function 415>
+   32:  0x188bb - !<wasm function 246>
+   33:   0xfc79 - !<wasm function 61>
+   34:  0x1b2a8 - !<wasm function 462>
+   35:  0x1bc13 - !<wasm function 619>
+   36:   0x701b - !<wasm function 16>
+   37:  0x1ae90 - !<wasm function 415>
+   38:  0x19edc - !<wasm function 329>
+   39:   0xf2c2 - !<wasm function 56>
+   40:  0x1b6cb - !<wasm function 518>
+   41:  0x1bc13 - !<wasm function 619>
+   42:   0x701b - !<wasm function 16>
+   43:  0x1ae90 - !<wasm function 415>
+   44:  0x19dd0 - !<wasm function 325>
+   45:  0x1baa3 - !<wasm function 586>
+   46:  0x1bcee - !<wasm function 640>
+   47:  0x1bc13 - !<wasm function 619>
+   48:   0x701b - !<wasm function 16>
+   49:  0x1ae90 - !<wasm function 415>
+   50:  0x1a91d - !<wasm function 372>",wasmtime
+0,0,factorial,enabled,signatures-check,2,"error while executing at wasm backtrace:
+    0:  0x1be00 - !<wasm function 672>
+    1:  0x1bd64 - !<wasm function 654>
+    2:  0x1bd5d - !<wasm function 653>
+    3:  0x1bd3d - !<wasm function 649>
+    4:  0x1bd7d - !<wasm function 657>
+    5:  0x1bd56 - !<wasm function 652>
+    6:   0x564f - !<wasm function 10>
+    7:  0x16aae - !<wasm function 170>
+    8:  0x1bc90 - !<wasm function 631>
+    9:  0x1a9f5 - !<wasm function 376>
+   10:  0x193b8 - !<wasm function 286>
+   11:  0x1ae30 - !<wasm function 411>
+   12:   0x7295 - !<wasm function 16>
+   13:  0x1ae90 - !<wasm function 415>
+   14:  0x18701 - !<wasm function 240>
+   15:  0x10841 - !<wasm function 68>
+   16:  0x1aec2 - !<wasm function 417>
+   17:  0x1bc13 - !<wasm function 619>
+   18:   0x701b - !<wasm function 16>
+   19:  0x1ae90 - !<wasm function 415>
+   20:  0x19189 - !<wasm function 278>
+   21:  0x1b5c1 - !<wasm function 502>
+   22:  0x1ad84 - !<wasm function 404>
+   23:  0x1bc13 - !<wasm function 619>
+   24:   0x701b - !<wasm function 16>
+   25:  0x1ae90 - !<wasm function 415>
+   26:  0x18b0a - !<wasm function 254>
+   27:   0x9371 - !<wasm function 23>
+   28:  0x1af0e - !<wasm function 420>
+   29:  0x1bc13 - !<wasm function 619>
+   30:   0x701b - !<wasm function 16>
+   31:  0x1ae90 - !<wasm function 415>
+   32:  0x188bb - !<wasm function 246>
+   33:   0xfc79 - !<wasm function 61>
+   34:  0x1b2a8 - !<wasm function 462>
+   35:  0x1bc13 - !<wasm function 619>
+   36:   0x701b - !<wasm function 16>
+   37:  0x1ae90 - !<wasm function 415>
+   38:  0x19edc - !<wasm function 329>
+   39:   0xf2c2 - !<wasm function 56>
+   40:  0x1b6cb - !<wasm function 518>
+   41:  0x1bc13 - !<wasm function 619>
+   42:   0x701b - !<wasm function 16>
+   43:  0x1ae90 - !<wasm function 415>
+   44:  0x19dd0 - !<wasm function 325>
+   45:  0x1baa3 - !<wasm function 586>
+   46:  0x1bcee - !<wasm function 640>
+   47:  0x1bc13 - !<wasm function 619>
+   48:   0x701b - !<wasm function 16>
+   49:  0x1ae90 - !<wasm function 415>
+   50:  0x1a91d - !<wasm function 372>",wasmtime
+0,45621,factorial,disabled,signatures-check,0,,wasmtime
+0,44201,factorial,disabled,signatures-check,1,,wasmtime
+0,39810,factorial,disabled,signatures-check,2,,wasmtime
+13,13440397,factorial,enabled,signatures-check,0,,wizard
+8,8293656,factorial,enabled,signatures-check,1,,wizard
+12,12214688,factorial,enabled,signatures-check,2,,wizard
+8,8318017,factorial,disabled,signatures-check,0,,wizard
+6,6558853,factorial,disabled,signatures-check,1,,wizard
+6,6487682,factorial,disabled,signatures-check,2,,wizard
+84,84535007,factorial,enabled,signatures-check,0,,wasmer
+24,24741548,factorial,enabled,signatures-check,1,,wasmer
+22,22855753,factorial,enabled,signatures-check,2,,wasmer
+80,80447964,factorial,disabled,signatures-check,0,,wasmer
+24,24825068,factorial,disabled,signatures-check,1,,wasmer
+22,22476110,factorial,disabled,signatures-check,2,,wasmer
+3408,3408212103,fib,uninstrumented,,0,,wasmtime
+3360,3360598933,fib,uninstrumented,,1,,wasmtime
+3259,3259626342,fib,uninstrumented,,2,,wasmtime
+71931,71931494149,fib,uninstrumented,,0,,wizard
+71323,71323979714,fib,uninstrumented,,1,,wizard
+71178,71178633036,fib,uninstrumented,,2,,wizard
+3396,3396112504,fib,uninstrumented,,0,,wasmer
+3305,3305305779,fib,uninstrumented,,1,,wasmer
+3362,3362059641,fib,uninstrumented,,2,,wasmer
+552816,552816086284,fib,enabled,forward,0,,wasmtime
