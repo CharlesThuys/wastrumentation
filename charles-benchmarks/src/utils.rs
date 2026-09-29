@@ -1,9 +1,8 @@
 use std::{
-    ffi::OsStr, 
     io, 
     fs,
     time::{Duration, Instant},
-    process::Command,
+    process::{Command, Output},
     num::NonZeroUsize,
     collections::{HashMap, HashSet},
     path::{PathBuf, absolute}
@@ -33,8 +32,8 @@ use wasmtime_wasi::p1::{self as preview1, WasiP1Ctx};
 pub static PROGRAM_DIR: &str = "input-programs/wasm-r3-bench";
 pub static ANALYSES_DIR: &str = "input-analyses/";
 
-const PROGRAMS: [&str; 2] = ["factorial", "rfxgen"];
-const ANALYSES: [&str; 2] = ["forward", "generic-apply"]; // , "pure-functions-memoization", "signatures-check"];
+const PROGRAMS: [&str; 1] = ["factorial"];
+const ANALYSES: [&str; 1] = [  "signatures-check"]; // "forward", "generic-apply"]; // , "pure-functions-memoization",
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BenchmarkResult {
@@ -97,12 +96,12 @@ pub fn execute_on_wizard(program: &[u8]) -> Result<Duration> {
     let temp_path = temp_file.path().to_str().expect("Invalid temp path");
     fs::write(temp_path, program)?;
 
-    let start_time = Instant::now();
-    Command::new("wizeng")
+    let output = Command::new("wizeng")
+        .arg("--metrics")
         .arg("--ext:multi-memory")
         .arg(temp_path)
-        .status()?;
-    Ok(Instant::now() - start_time)
+        .output()?;
+    get_wizard_runtime_from_output(output)
 }
 
 pub fn execute_on_wasmer(program: &[u8]) -> Result<Duration> {
@@ -216,4 +215,31 @@ pub fn instrument(input_program: &[u8], analysis: &str, disable: bool) -> Result
         .wastrument(input_program, analysis, &configuration)
         .map_err(|error| anyhow!("Wastrumentation failed: {error:?}"))?;
     Ok(wastrumented)
+}
+
+pub fn get_wizard_runtime_from_output(process_output: Output) -> Result<Duration> {
+    let output =  str::from_utf8(&process_output.stdout)?;
+    let time = output.lines().find(|line| line.starts_with("main:time_us")).expect("wrong wizard metrics");
+    let duration = time.split(":").nth(2).unwrap().split_whitespace().nth(0).unwrap().parse::<u64>().ok().unwrap();
+    Ok(Duration::from_micros(duration))
+}
+
+#[test]
+fn test_parse_wizard_metrics() {
+    use std::str;    
+    
+    let output_wizard = Command::new("wizeng").arg("--metrics").arg("--ext:multi-memory").arg("input-programs/wasm-r3-bench/factorial.wasm").output().unwrap();
+    let output =  match str::from_utf8(&output_wizard.stdout) {
+        Ok(val) => val,
+        Err(_) => "error",
+    };
+
+    let _line = output.lines()
+        .find(|line| line.starts_with("main:time_us"))
+        .and_then(|line| {
+            let a = line.split(":").nth(2).unwrap().split_whitespace().nth(0).unwrap().parse::<u64>().ok().unwrap();
+            println!("a: {}", a);
+            Some(Duration::from_micros(a))
+        }).unwrap();
+    
 }
