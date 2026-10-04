@@ -26,15 +26,15 @@ use wastrumentation::{
 };
 
 // Wasmtime imports
-use wasmtime::{Config, Engine, Linker, Module, Store};
+use wasmtime::{Config, Engine, Linker, Module, Store, Instance};
 use wasmtime_wasi::WasiCtxBuilder;
 use wasmtime_wasi::p1::{self as preview1, WasiP1Ctx};
 
 pub static PROGRAM_DIR: &str = "input-programs/wasm-r3-bench";
 pub static ANALYSES_DIR: &str = "input-analyses/";
 
-const PROGRAMS: [&str; 2] = ["factorial", "rfxgen"];
-const ANALYSES: [&str; 2] = ["forward", "generic-apply"]; // , "pure-functions-memoization", "signatures-check"];
+const PROGRAMS: [&str; 1] = ["factorial"];
+const ANALYSES: [&str; 1] = ["signatures-check"]; // "forward", "generic-apply"]; // , "pure-functions-memoization", ];
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BenchmarkResult {
@@ -57,7 +57,7 @@ pub struct SizeResult {
     pub error: String,
 }
 
-pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
+pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {/*
     let mut config = Config::new();
     config.wasm_backtrace_max_frames(Some(NonZeroUsize::new(100).unwrap()));
 
@@ -76,8 +76,8 @@ pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
 
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
-    Ok(Instant::now() - start_time)
-    /*
+    Ok(Instant::now() - start_time)*/
+    
     let mut config = Config::default();
     config.cranelift_opt_level(wasmtime::OptLevel::SpeedAndSize);
 
@@ -89,7 +89,7 @@ pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
 
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
-    Ok(Instant::now() - start_time) */
+    Ok(Instant::now() - start_time) 
 }
 
 pub fn execute_on_wizard(program: &[u8]) -> Result<Duration> {

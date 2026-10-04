@@ -4,7 +4,7 @@ use utils::*;
 use std::{fs, io};
 use chrono::Utc;
 
-const RUNS: usize = 20;
+const RUNS: usize = 1;
 const RESULT_DIR: &str = "results/";
 const BENCH_NAME: &str = "desktop-linux-baseline";
 
