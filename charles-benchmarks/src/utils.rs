@@ -1,9 +1,9 @@
 use std::{
+    env,
     io, 
     fs,
     time::{Duration, Instant},
     process::{Command, Output},
-    num::NonZeroUsize,
     collections::{HashMap, HashSet},
     path::{PathBuf, absolute}
 };
@@ -12,6 +12,9 @@ use tempfile::Builder;
 use serde::{Deserialize, Serialize};
 use anyhow::{Result, anyhow};
 
+use wastrumentation_lang_webassembly::compile::{compiler::Compiler as WACompiler, options::WebAssemblySource::Module as WAModule};
+use wastrumentation_lang_webassembly::generate::analysis::Hook as WAHook;
+use wastrumentation_lang_webassembly::generate::analysis::WasmAnalysisSpec;
 use wastrumentation_lang_assemblyscript::compile::compiler::Compiler as ASCompiler;
 use wastrumentation_lang_rust::compile::{compiler::Compiler, options::RustSource::Manifest};
 use wastrumentation_lang_rust::generate::analysis::Hook;
@@ -25,15 +28,15 @@ use wastrumentation::{
 };
 
 // Wasmtime imports
-use wasmtime::{Config, Engine, Linker, Module, Store};
+use wasmtime::{Config, Engine, Linker, Instance, Module, Store};
 use wasmtime_wasi::WasiCtxBuilder;
 use wasmtime_wasi::p1::{self as preview1, WasiP1Ctx};
 
 pub static PROGRAM_DIR: &str = "input-programs/wasm-r3-bench";
 pub static ANALYSES_DIR: &str = "input-analyses/";
 
-const PROGRAMS: [&str; 1] = ["factorial"];
-const ANALYSES: [&str; 1] = [  "signatures-check"]; // "forward", "generic-apply"]; // , "pure-functions-memoization",
+const PROGRAMS: [&str; 2] = ["factorial", "rfxgen"];
+const ANALYSES: [&str; 2] = ["forward", "forward-on-off"]; // , "pure-functions-memoization",  "signatures-check",
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BenchmarkResult {
@@ -57,8 +60,10 @@ pub struct SizeResult {
 }
 
 pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
+    /* 
     let mut config = Config::new();
     config.wasm_backtrace_max_frames(Some(NonZeroUsize::new(100).unwrap()));
+    config.wasm_multi_memory(true);
 
     let engine = Engine::new(&config)?;
     let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
@@ -75,8 +80,8 @@ pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
 
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
-    Ok(Instant::now() - start_time)
-    /*
+    Ok(Instant::now() - start_time)*/
+    
     let mut config = Config::default();
     config.cranelift_opt_level(wasmtime::OptLevel::SpeedAndSize);
 
@@ -88,7 +93,7 @@ pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
 
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
-    Ok(Instant::now() - start_time) */
+    Ok(Instant::now() - start_time)
 }
 
 pub fn execute_on_wizard(program: &[u8]) -> Result<Duration> {
@@ -111,7 +116,9 @@ pub fn execute_on_wasmer(program: &[u8]) -> Result<Duration> {
 
     let start_time = Instant::now();
     Command::new("wasmer")
+        .arg("run")
         .arg(temp_path)
+        .arg("--enable-multi-memory")
         .status()?;
     Ok(Instant::now() - start_time)
 }
@@ -189,13 +196,14 @@ pub fn instrument(input_program: &[u8], analysis: &str, disable: bool) -> Result
         ("forward", Hook::all_hooks()),
         ("pure-functions-memoization", HashSet::from([Hook::GenericApply])),
         ("signatures-check", HashSet::from([Hook::GenericApply])),
+        ("forward-on-off", Hook::all_hooks()),
     ]);
 
     let analysis_compiler = Compiler::setup_compiler()?;
     let instrumentation_compiler = ASCompiler::setup_compiler()?;
 
     let source = Manifest(
-        WasiSupport::Enabled,
+        WasiSupport::Disabled,
         absolute(ANALYSES_DIR.to_string() + analysis + "/Cargo.toml")?,
     );
     let hooks = analysis_hooks

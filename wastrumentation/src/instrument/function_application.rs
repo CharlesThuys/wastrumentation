@@ -61,7 +61,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     );
 
     // 1 page = 65,536 bytes. Each function flag takes 1 byte.
-    let total_functions = pre_instrumentation_function_indices.len() as u32;
+    let total_functions = module.functions.len() as u32;
     let required_pages = total_functions.div_ceil(65536);
 
     // Create new memory for flags
@@ -190,7 +190,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             .expect("uninstrumented function index should exist");
 
         let mut instrumented_body = Vec::new();
-
+        
         instrumented_body.extend_from_slice(&[
             const_instrumented_function_index.clone(),
             // --- load flag ---
