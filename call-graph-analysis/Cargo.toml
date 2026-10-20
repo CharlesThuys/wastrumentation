@@ -3,6 +3,7 @@ name = "call-graph-analysis"
 version = "0.1.0"
 edition = "2024"
 
+
 [dependencies]
 tempfile = { workspace = true }
 anyhow = "1.0.104"
@@ -30,5 +31,6 @@ wat = { workspace = true }
 #
 # wasmtime-wasi = "47.0"
 # wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
-# wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
+wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
+bimap = "0.6.3"
 #

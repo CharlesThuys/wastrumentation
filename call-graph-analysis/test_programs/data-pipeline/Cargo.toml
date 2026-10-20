@@ -1,0 +1,12 @@
+[package]
+name = "data-pipeline"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"      # Optimize for size to keep the Wasm layout clean
+lto = false           # Link Time Optimization
+strip = false         # Remove debug symbols if you want raw analysis, or keep false to inspect function names via the Wasm "name" section

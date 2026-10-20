@@ -8,8 +8,9 @@ members = [
     "cli",
     "wastrumentation-static-analysis",
     "supported-languages/*",
-    "charles-benchmarks"
-, "call-graph-analysis"]
+    "charles-benchmarks",
+    "call-graph-analysis",
+    "call-graph-analysis/test_programs/*"]
 
 [workspace.dependencies]
 # Crates defined as part of Wastrumentation

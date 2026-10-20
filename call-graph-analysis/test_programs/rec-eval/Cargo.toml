@@ -1,0 +1,12 @@
+[package]
+name = "rec-eval"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"      # Optimize for size to keep the Wasm layout clean
+lto = true           # Link Time Optimization
+strip = true         # Remove debug symbols if you want raw analysis, or keep false to inspect function names via the Wasm "name" section
