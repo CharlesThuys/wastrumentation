@@ -1,8 +1,8 @@
 mod utils;
 use utils::*;
 
-use std::{fs, io};
 use chrono::Utc;
+use std::{fs, io};
 
 const RUNS: usize = 1;
 const RESULT_DIR: &str = "results/";
@@ -16,10 +16,12 @@ fn main() -> io::Result<()> {
     let time = Utc::now();
     fs::create_dir(RESULT_DIR.to_owned() + BENCH_NAME + &time.to_rfc3339())?;
 
-    let mut size_wtr =
-        csv::Writer::from_path(RESULT_DIR.to_owned() + BENCH_NAME  + &time.to_rfc3339() + "/baseline_sizes.csv")?;
-    let mut wtr =
-        csv::Writer::from_path(RESULT_DIR.to_owned() + BENCH_NAME + &time.to_rfc3339() + "/baseline_result.csv")?;
+    let mut size_wtr = csv::Writer::from_path(
+        RESULT_DIR.to_owned() + BENCH_NAME + &time.to_rfc3339() + "/baseline_sizes.csv",
+    )?;
+    let mut wtr = csv::Writer::from_path(
+        RESULT_DIR.to_owned() + BENCH_NAME + &time.to_rfc3339() + "/baseline_result.csv",
+    )?;
 
     for program_path in programs {
         // The complete WASM program as raw bytes.
@@ -36,24 +38,36 @@ fn main() -> io::Result<()> {
             error: "".to_string(),
         })?;
         size_wtr.flush()?;
-        
+
         for platform in platforms {
             for run in 0..RUNS {
-            let result = run_bench(platform, program_name, &program, "", "uninstrumented", run as u32);
-            wtr.serialize(result)?;
-            wtr.flush()?;
+                let result = run_bench(
+                    platform,
+                    program_name,
+                    &program,
+                    "",
+                    "uninstrumented",
+                    run as u32,
+                );
+                wtr.serialize(result)?;
+                wtr.flush()?;
             }
         }
 
         for analysis_path in &analyses {
             let analysis_name = analysis_path.file_stem().unwrap().to_str().unwrap();
             let mut instrumented = vec![];
-            
+
             // Instrumented Program Size
             match instrument(&program, analysis_name) {
                 Ok(wastrumented) => {
                     instrumented = wastrumented;
-                    println!("Instrumented {} with {} ({} bytes)", program_name, analysis_name, instrumented.len());
+                    println!(
+                        "Instrumented {} with {} ({} bytes)",
+                        program_name,
+                        analysis_name,
+                        instrumented.len()
+                    );
                     size_wtr.serialize(SizeResult {
                         bytes: instrumented.len() as u32,
                         program_name: program_name.to_string(),
@@ -77,7 +91,14 @@ fn main() -> io::Result<()> {
 
             for platform in platforms {
                 for run in 0..RUNS {
-                    let result = run_bench(platform, program_name, &instrumented, analysis_name, "baseline", run as u32);
+                    let result = run_bench(
+                        platform,
+                        program_name,
+                        &instrumented,
+                        analysis_name,
+                        "baseline",
+                        run as u32,
+                    );
                     wtr.serialize(result)?;
                     wtr.flush()?;
                 }

@@ -1,22 +1,15 @@
 use std::{
-    ffi::OsStr, 
-    io, 
-    fs,
-    time::{Duration, Instant},
-    process::Command,
-    num::NonZeroUsize,
     collections::{HashMap, HashSet},
-    path::{PathBuf, absolute}
+    fs, io,
+    path::{PathBuf, absolute},
+    process::Command,
+    time::{Duration, Instant},
 };
 
-use tempfile::Builder;
-use serde::{Deserialize, Serialize};
 use anyhow::{Result, anyhow};
+use serde::{Deserialize, Serialize};
+use tempfile::Builder;
 
-use wastrumentation_lang_assemblyscript::compile::compiler::Compiler as ASCompiler;
-use wastrumentation_lang_rust::compile::{compiler::Compiler, options::RustSource::Manifest};
-use wastrumentation_lang_rust::generate::analysis::Hook;
-use wastrumentation_lang_rust::generate::analysis::RustAnalysisSpec;
 use rust_to_wasm_compiler::WasiSupport;
 use wastrumentation::{
     Configuration,
@@ -24,10 +17,17 @@ use wastrumentation::{
     Wastrumenter,
     compiler::Compiles,
 };
+use wastrumentation_lang_assemblyscript::compile::compiler::Compiler as ASCompiler;
+use wastrumentation_lang_rust::compile::{compiler::Compiler, options::RustSource::Manifest};
+use wastrumentation_lang_rust::generate::analysis::Hook;
+use wastrumentation_lang_rust::generate::analysis::RustAnalysisSpec;
 
 // Wasmtime imports
-use wasmtime::{Config, Engine, Linker, Module, Store, Instance};
+#[allow(unused_imports)]
+use wasmtime::{Config, Engine, Instance, Linker, Module, Store};
+#[allow(unused_imports)]
 use wasmtime_wasi::WasiCtxBuilder;
+#[allow(unused_imports)]
 use wasmtime_wasi::p1::{self as preview1, WasiP1Ctx};
 
 pub static PROGRAM_DIR: &str = "input-programs/wasm-r3-bench";
@@ -57,7 +57,8 @@ pub struct SizeResult {
     pub error: String,
 }
 
-pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {/*
+pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
+    /*
     let mut config = Config::new();
     config.wasm_backtrace_max_frames(Some(NonZeroUsize::new(100).unwrap()));
 
@@ -77,19 +78,19 @@ pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {/*
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
     Ok(Instant::now() - start_time)*/
-    
+
     let mut config = Config::default();
     config.cranelift_opt_level(wasmtime::OptLevel::SpeedAndSize);
 
     let engine = Engine::new(&config)?;
-    let module = Module::from_binary(&engine, &program)?;
+    let module = Module::from_binary(&engine, program)?;
     let mut store = Store::new(&engine, ());
     let instance = Instance::new(&mut store, &module, &[]).unwrap();
     let start_function = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
 
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
-    Ok(Instant::now() - start_time) 
+    Ok(Instant::now() - start_time)
 }
 
 pub fn execute_on_wizard(program: &[u8]) -> Result<Duration> {
@@ -111,47 +112,46 @@ pub fn execute_on_wasmer(program: &[u8]) -> Result<Duration> {
     fs::write(temp_path, program)?;
 
     let start_time = Instant::now();
-    Command::new("wasmer")
-        .arg(temp_path)
-        .status()?;
+    Command::new("wasmer").arg(temp_path).status()?;
     Ok(Instant::now() - start_time)
 }
 
-pub fn run_bench(platform: &str, program_name: &str,  program: &[u8], analysis_name: &str, instrumentation: &str, run: u32) -> BenchmarkResult {
-    let result: Result<Duration>;
-
-    match platform {
-        "wizard" => result = execute_on_wizard(program),
-        "wasmtime" => result = execute_on_wasmtime(program),
-        "wasmer" => result = execute_on_wasmer(program),
-        _ => result = Err(anyhow!("Unkown execution platform: {}", platform))
-    }
+pub fn run_bench(
+    platform: &str,
+    program_name: &str,
+    program: &[u8],
+    analysis_name: &str,
+    instrumentation: &str,
+    run: u32,
+) -> BenchmarkResult {
+    let result = match platform {
+        "wizard" => execute_on_wizard(program),
+        "wasmtime" => execute_on_wasmtime(program),
+        "wasmer" => execute_on_wasmer(program),
+        _ => Err(anyhow!("Unkown execution platform: {}", platform)),
+    };
 
     match result {
-        Ok(success) => {
-            BenchmarkResult {
-                duration_ms: success.as_millis(),
-                duration_ns: success.as_nanos(),
-                program_name: program_name.to_string(),
-                instrumentation: instrumentation.to_string(),
-                analysis_name: analysis_name.to_string(),
-                run: run,
-                error: "".to_string(),
-                platform: platform.to_string(),
-            }
-        }
-        Err(err) => {
-            BenchmarkResult {
-                duration_ms: 0,
-                duration_ns: 0,
-                program_name: program_name.to_string(),
-                instrumentation: instrumentation.to_string(),
-                analysis_name: analysis_name.to_string(),
-                run: run,
-                error: err.to_string(),
-                platform: platform.to_string(),
-            }
-        }
+        Ok(success) => BenchmarkResult {
+            duration_ms: success.as_millis(),
+            duration_ns: success.as_nanos(),
+            program_name: program_name.to_string(),
+            instrumentation: instrumentation.to_string(),
+            analysis_name: analysis_name.to_string(),
+            run,
+            error: "".to_string(),
+            platform: platform.to_string(),
+        },
+        Err(err) => BenchmarkResult {
+            duration_ms: 0,
+            duration_ns: 0,
+            program_name: program_name.to_string(),
+            instrumentation: instrumentation.to_string(),
+            analysis_name: analysis_name.to_string(),
+            run,
+            error: err.to_string(),
+            platform: platform.to_string(),
+        },
     }
 }
 
@@ -161,8 +161,8 @@ pub fn load_programs() -> io::Result<Vec<PathBuf>> {
         .filter(|path| {
             let p = path.as_ref().unwrap();
             p.is_file()
-            && PROGRAMS.contains(&p.file_stem().unwrap().to_str().unwrap())
-            && p.extension().unwrap() == "wasm"
+                && PROGRAMS.contains(&p.file_stem().unwrap().to_str().unwrap())
+                && p.extension().unwrap() == "wasm"
         })
         .collect::<io::Result<Vec<_>>>()?;
     paths.sort();
@@ -174,9 +174,8 @@ pub fn load_analyses() -> io::Result<Vec<PathBuf>> {
     let mut paths = fs::read_dir(ANALYSES_DIR)?
         .map(|entry| entry.map(|entry| entry.path()))
         .filter(|path| {
-            let p =  path.as_ref().unwrap();
-            ANALYSES.contains(&p.file_name().unwrap().to_str().unwrap())
-            && p.is_dir()
+            let p = path.as_ref().unwrap();
+            ANALYSES.contains(&p.file_name().unwrap().to_str().unwrap()) && p.is_dir()
         })
         .collect::<io::Result<Vec<_>>>()?;
 
@@ -188,7 +187,10 @@ pub fn instrument(input_program: &[u8], analysis: &str) -> Result<Vec<u8>> {
     let analysis_hooks: HashMap<&'static str, HashSet<Hook>> = HashMap::from([
         ("generic-apply", HashSet::from([Hook::GenericApply])),
         ("forward", Hook::all_hooks()),
-        ("pure-functions-memoization", HashSet::from([Hook::GenericApply])),
+        (
+            "pure-functions-memoization",
+            HashSet::from([Hook::GenericApply]),
+        ),
         ("signatures-check", HashSet::from([Hook::GenericApply])),
     ]);
 

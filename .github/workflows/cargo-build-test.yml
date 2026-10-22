@@ -9,7 +9,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-Dwarnings"
-  BINARYEN_VERSION: 121
+  BINARYEN_VERSION: 124
   BUN_VERSION: "v1.1.43"
   ASSEMBLYSCRIPT_VERSION: "0.27.27"
 
@@ -29,8 +29,6 @@ jobs:
           pre-commit --version
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Run pre-commit on all files
-        env:
-          SKIP: fix-encoding-pragma
         run: |
           pre-commit run --all-files --show-diff-on-failure
 
