@@ -34,6 +34,7 @@ pub const CODE_IS_PRESENT: i32 = 0;
 pub const CODE_IS_IMPORT: i32 = 1;
 
 #[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_arguments)]
 pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     module: &mut Module,
     pre_instrumentation_function_indices: &HashSet<Idx<Function>>,
@@ -42,7 +43,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     wasp_imported_generic_apply_base: &WasmImport,
     wasp_imported_set_f_instrumentation: &WasmImport,
     wasp_imported_set_instrumentation: &WasmImport,
-    start_disabled: bool  
+    start_disabled: bool,
 ) -> Library<InstrumentationLanguage> {
     // 0. GENERATE GENERIC APPLY
     let generic_apply_index = module.add_function_import(
@@ -190,7 +191,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             .expect("uninstrumented function index should exist");
 
         let mut instrumented_body = Vec::new();
-        
+
         instrumented_body.extend_from_slice(&[
             const_instrumented_function_index.clone(),
             // --- load flag ---

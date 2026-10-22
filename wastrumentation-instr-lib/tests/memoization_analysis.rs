@@ -191,7 +191,7 @@ fn report_memoization_benches_for(
     let configuration = Configuration {
         target_indices: Some(immutable_set.iter().copied().collect()),
         primary_selection: Some(PrimaryTarget::Analysis),
-        start_disabled: false
+        start_disabled: false,
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
@@ -256,7 +256,7 @@ fn report_memoization_benches_for(
     let configuration = Configuration {
         target_indices: Some(pure_functions_of_interest.clone()),
         primary_selection: Some(PrimaryTarget::Analysis),
-        start_disabled: false
+        start_disabled: false,
     };
 
     let wastrumented = wastrumenter

@@ -41,7 +41,7 @@ pub struct Wastrumenter<
 pub struct Configuration {
     pub target_indices: Option<Vec<u32>>,
     pub primary_selection: Option<PrimaryTarget>,
-    pub start_disabled: bool
+    pub start_disabled: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -92,7 +92,7 @@ where
         let Configuration {
             target_indices,
             primary_selection,
-            start_disabled
+            start_disabled,
         } = configuration;
         // 1. Compile analysis
         let ProcessedAnalysis {
@@ -113,7 +113,7 @@ where
             input_program,
             &analysis_interface,
             target_indices,
-            *start_disabled
+            *start_disabled,
         )
         .map_err(Error::InstrumentationError)?;
         // 3. Compile the instrumentation lib
