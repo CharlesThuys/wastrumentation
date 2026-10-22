@@ -33,4 +33,5 @@ wat = { workspace = true }
 # wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
 wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
 bimap = "0.6.3"
+queue = "0.3.1"
 #

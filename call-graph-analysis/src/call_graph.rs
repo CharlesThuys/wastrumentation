@@ -20,6 +20,7 @@ pub struct CallGraph {
     pub graph: DiGraph<u32, CallType>,
     pub node_map: BiHashMap<u32, NodeIndex>,
     pub entry_points: Vec<u32>,
+    pub virtual_root: NodeIndex,
 }
 
 impl CallGraph {
@@ -27,11 +28,12 @@ impl CallGraph {
         let adj_list = get_adjlist_wassail(path)?;
         let wasm_bytes = fs::read(path)?;
         let entry_points = get_entry_points(&wasm_bytes);
-        let (graph, node_map) = build_graph_from_wassail(adj_list);
+        let (graph, node_map, virtual_root) = build_graph_from_wassail(adj_list, &entry_points);
         Ok(CallGraph {
             graph,
             node_map,
             entry_points,
+            virtual_root,
         })
     }
 
@@ -46,29 +48,17 @@ impl CallGraph {
         let path = input_file.path().to_str().expect("Invalid temp path");
         let adj_list = get_adjlist_wassail(path)?;
         let entry_points = get_entry_points(wasm_bytes);
-        let (graph, node_map) = build_graph_from_wassail(adj_list);
+        let (graph, node_map, virtual_root) = build_graph_from_wassail(adj_list, &entry_points);
         Ok(CallGraph {
             graph,
             node_map,
             entry_points,
+            virtual_root,
         })
     }
 
-    pub fn get_dominators(&mut self) -> (dominators::Dominators<NodeIndex>, NodeIndex) {
-        let virtual_root = self.graph.add_node(0);
-
-        for export in &self.entry_points {
-            if self.node_map.contains_left(export) {
-                self.graph.add_edge(
-                    virtual_root,
-                    *self.node_map.get_by_left(export).unwrap(),
-                    CallType::Direct,
-                );
-            }
-        }
-        let dom_tree = dominators::simple_fast(&self.graph, virtual_root);
-        self.graph.remove_node(virtual_root);
-        (dom_tree, virtual_root)
+    pub fn get_dominators(&self) -> dominators::Dominators<NodeIndex> {
+        dominators::simple_fast(&self.graph, self.virtual_root)
     }
 }
 
@@ -104,7 +94,8 @@ caller callee direct/indirect
 */
 fn build_graph_from_wassail(
     wassail_output: String,
-) -> (DiGraph<u32, CallType>, BiHashMap<u32, NodeIndex>) {
+    entry_points: &Vec<u32>,
+) -> (DiGraph<u32, CallType>, BiHashMap<u32, NodeIndex>, NodeIndex) {
     let mut graph = DiGraph::<u32, CallType>::new();
     let mut node_map: BiHashMap<u32, NodeIndex> = BiHashMap::new();
 
@@ -138,7 +129,18 @@ fn build_graph_from_wassail(
         graph.add_edge(caller_node, callee_node, call_type);
     }
 
-    (graph, node_map)
+    let virtual_root = graph.add_node(u32::MAX);
+    for entry_point in entry_points {
+        if node_map.contains_left(entry_point) {
+            graph.add_edge(
+                virtual_root,
+                *node_map.get_by_left(entry_point).unwrap(),
+                CallType::Direct,
+            );
+        }
+    }
+
+    (graph, node_map, virtual_root)
 }
 
 fn get_adjlist_wassail(wasm_path: &str) -> Result<String> {

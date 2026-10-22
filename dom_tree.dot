@@ -1,0 +1,11 @@
+digraph {
+    0 [ label = "entry" ]
+    1 [ label = "A" ]
+    2 [ label = "B" ]
+    3 [ label = "C" ]
+    4 [ label = "exit" ]
+    0 -> 1 [ ]
+    0 -> 2 [ ]
+    0 -> 3 [ ]
+    3 -> 4 [ ]
+}
