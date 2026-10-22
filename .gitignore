@@ -1,3 +1,7 @@
 target
 Cargo.lock
+random_wasm_program_test/
+charles-benchmarks/results/
 .secrets
+.DS_Store
+**/*.rs.bk

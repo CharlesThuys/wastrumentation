@@ -1,0 +1,8 @@
+bytes,program_name,instrumentation,analysis_name,error
+38965,factorial,uninstrumented,,
+320644,factorial,instrumented,forward,
+121967,factorial,instrumented,generic-apply,
+130295,factorial,instrumented,pure-functions-memoization,
+126740,factorial,instrumented,signatures-check,
+106539,fib,uninstrumented,,
+869461,fib,instrumented,forward,

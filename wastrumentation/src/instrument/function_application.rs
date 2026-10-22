@@ -34,6 +34,7 @@ pub const CODE_IS_PRESENT: i32 = 0;
 pub const CODE_IS_IMPORT: i32 = 1;
 
 #[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_arguments)]
 pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     module: &mut Module,
     pre_instrumentation_function_indices: &HashSet<Idx<Function>>,
@@ -42,6 +43,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     wasp_imported_generic_apply_base: &WasmImport,
     wasp_imported_set_f_instrumentation: &WasmImport,
     wasp_imported_set_instrumentation: &WasmImport,
+    start_disabled: bool,
 ) -> Library<InstrumentationLanguage> {
     // 0. GENERATE GENERIC APPLY
     let generic_apply_index = module.add_function_import(
@@ -60,7 +62,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     );
 
     // 1 page = 65,536 bytes. Each function flag takes 1 byte.
-    let total_functions = pre_instrumentation_function_indices.len() as u32;
+    let total_functions = module.functions.len() as u32;
     let required_pages = total_functions.div_ceil(65536);
 
     // Create new memory for flags
@@ -189,8 +191,6 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             .expect("uninstrumented function index should exist");
 
         let mut instrumented_body = Vec::new();
-
-        // instrumented_body.extend(push_args_on_stack);
 
         instrumented_body.extend_from_slice(&[
             const_instrumented_function_index.clone(),
@@ -348,7 +348,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     let start_function = module.function_mut(start_idx);
     let instructions = start_function.instrs_mut().unwrap();
     instructions.insert(0, Instr::Call(set_instrumentation));
-    instructions.insert(0, Instr::Const(Val::I32(1)));
-
+    // Depends on if you start with instrumentation on or off
+    instructions.insert(0, Instr::Const(Val::I32(!start_disabled as i32)));
     library
 }

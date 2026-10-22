@@ -30,6 +30,10 @@ struct Args {
     #[arg(long, required = false, num_args = 1..)]
     targets: Option<Vec<u32>>,
 
+    // Start with the instrumentation disabled
+    #[arg(short, long)]
+    start_disabled: bool,
+
     /// Output path for the instrumented module
     #[arg(short, long)]
     output_path: Output,
@@ -65,6 +69,17 @@ enum Hook {
     BlockPost,
     LoopPre,
     LoopPost,
+    RefFunc,
+    RefNull,
+    RefIsNull,
+    TableGet,
+    TableSet,
+    TableSize,
+    TableGrow,
+    TableFill,
+    TableCopy,
+    TableInit,
+    ElemDrop,
 }
 
 impl From<&Hook> for AnalysisHook {
@@ -98,6 +113,17 @@ impl From<&Hook> for AnalysisHook {
             Hook::BlockPost => AnalysisHook::BlockPost,
             Hook::LoopPre => AnalysisHook::LoopPre,
             Hook::LoopPost => AnalysisHook::LoopPost,
+            Hook::RefFunc => AnalysisHook::RefFunc,
+            Hook::RefNull => AnalysisHook::RefNull,
+            Hook::RefIsNull => AnalysisHook::RefIsNull,
+            Hook::TableGet => AnalysisHook::TableGet,
+            Hook::TableSet => AnalysisHook::TableSet,
+            Hook::TableSize => AnalysisHook::TableSize,
+            Hook::TableGrow => AnalysisHook::TableGrow,
+            Hook::TableFill => AnalysisHook::TableFill,
+            Hook::TableCopy => AnalysisHook::TableCopy,
+            Hook::TableInit => AnalysisHook::TableInit,
+            Hook::ElemDrop => AnalysisHook::ElemDrop,
         }
     }
 }
@@ -109,6 +135,7 @@ fn main() -> anyhow::Result<()> {
         mut output_path,
         hooks,
         targets,
+        start_disabled,
     } = Args::parse();
 
     let mut wasm_module = Vec::new();
@@ -133,6 +160,7 @@ fn main() -> anyhow::Result<()> {
     let configuration = Configuration {
         target_indices: targets,
         primary_selection: None,
+        start_disabled,
     };
 
     let instrumented_wasm_module = Wastrumenter::new(

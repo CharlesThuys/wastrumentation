@@ -12,6 +12,7 @@ rust-to-wasm-compiler = { workspace = true }
 wastrumentation = { workspace = true }
 wastrumentation-lang-assemblyscript = { workspace = true }
 wastrumentation-lang-rust = { workspace = true }
+wastrumentation-lang-webassembly = { workspace = true }
 chrono = "0.4.45"
 
 wasp-compiler = { workspace = true }

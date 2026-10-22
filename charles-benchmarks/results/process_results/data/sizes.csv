@@ -1,7 +1,0 @@
-bytes,program_name,instrumentation,analysis_name,error
-38965,factorial,uninstrumented,uninstrumented,
-316781,factorial,instrumented,forward,
-118088,factorial,instrumented,generic-apply,
-1199,game-of-life,uninstrumented,uninstrumented,
-81720,game-of-life,instrumented,forward,
-31031,game-of-life,instrumented,generic-apply,
