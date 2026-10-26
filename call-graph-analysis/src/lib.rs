@@ -13,7 +13,7 @@ pub fn compute_paths_from_bytes(bytes: &[u8], k: usize) -> anyhow::Result<HashMa
     let mut result = HashMap::new();
     for (node, path_nodes) in paths.into_iter() {
         if let Some(&f_idx) = call_graph.node_map.get_by_right(&node) {
-            let mut path_funcs = vec![f_idx];
+            let mut path_funcs = Vec::new();
             for child in path_nodes.iter() {
                 let path_member = call_graph.node_map.get_by_right(child);
                 if let Some(&member_idx) = path_member {
@@ -60,7 +60,7 @@ fn compute_paths_for_height(
         .iter()
         .filter(|&(&node, &height)| height == k && node != call_graph.virtual_root)
         .filter_map(|(&start, _)| {
-            let path = reachable_from_node(call_graph, call_graph.virtual_root);
+            let path = reachable_from_node(call_graph, start);
             let valid = path
                 .iter()
                 .all(|&check| is_dominated_by_node(&dom_tree, start, check));
@@ -241,5 +241,22 @@ mod tests {
         let call_graph = call_graph::CallGraph::from_bytes(&wasm_bytes).unwrap();
         let dom_tree = call_graph.get_dominators();
         print_direct_dominators(&call_graph, dom_tree);
+    }
+
+    #[test]
+    fn path_test_chain_graph_algo() {
+        let wasm_program_text: &str = r#"
+            (module
+                (export "a" (func $a))
+                (func $a call $b) ;; 0
+                (func $b call $c) ;; 1
+                (func $c call $d) ;; 2
+                (func $d call $e) ;; 3
+                (func $e ) ;; 4
+            )"#;
+
+        let wasm_bytes = wat2wasm(wasm_program_text).unwrap();
+        let paths = compute_paths_from_bytes(&wasm_bytes, 2);
+        println!("{:?}, ", paths);
     }
 }

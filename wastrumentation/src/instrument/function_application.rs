@@ -3,6 +3,7 @@ use std::collections::HashSet;
 
 use crate::compiler::{LibGeneratable, Library};
 use crate::stack_library::StackLibrary;
+use wasabi_wasm::BinaryOp;
 use wasabi_wasm::ElementMode;
 use wasabi_wasm::Function;
 use wasabi_wasm::FunctionType;
@@ -18,6 +19,7 @@ use wasabi_wasm::Module;
 use wasabi_wasm::RefType;
 use wasabi_wasm::StoreOp;
 use wasabi_wasm::Table;
+use wasabi_wasm::UnaryOp;
 use wasabi_wasm::Val;
 use wasabi_wasm::ValType;
 use wasabi_wasm::{Code, Element, ImportOrPresent};
@@ -44,6 +46,9 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     wasp_imported_set_f_instrumentation: &WasmImport,
     wasp_imported_set_instrumentation: &WasmImport,
     start_disabled: bool,
+    fast_paths: &HashMap<u32, Vec<u32>>,
+    clean_functions_indeces: &HashMap<Idx<Function>, Idx<Function>>,
+    program_function_count: usize,
 ) -> Library<InstrumentationLanguage> {
     // 0. GENERATE GENERIC APPLY
     let generic_apply_index = module.add_function_import(
@@ -62,29 +67,56 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     );
 
     // 1 page = 65,536 bytes. Each function flag takes 1 byte.
-    let total_functions = module.functions.len() as u32;
-    let required_pages = total_functions.div_ceil(65536);
+    let required_pages_bytes = program_function_count.div_ceil(65536) as u32;
+    let required_pages_u32 = program_function_count.div_ceil(65536 * 4) as u32;
 
     // Create new memory for flags
     let flag_memory = Memory::new(Limits {
-        initial_size: required_pages,
+        initial_size: required_pages_bytes,
         max_size: None,
     });
     let flag_memory_index = module.memories.len() as u32;
     module.memories.push(flag_memory);
-    /*
-    // Fill memory with initizlized flags
+
+    // Create new memory for counters
+    let counter_memory = Memory::new(Limits {
+        initial_size: required_pages_u32,
+        max_size: None,
+    });
+    let counter_memory_index = module.memories.len() as u32;
+    module.memories.push(counter_memory);
+
+    // Create new memory for path entrances
+    let path_memory = Memory::new(Limits {
+        initial_size: required_pages_u32,
+        max_size: None,
+    });
+    let path_memory_index = module.memories.len() as u32;
+    module.memories.push(path_memory);
+
+    // Memory with path entries:
+    // Initialize path memory with -1 for every function
+    let mut path_entries = vec![-1_i32; program_function_count];
+    for (&entry, functions) in fast_paths {
+        for &f_idx in functions {
+            path_entries[f_idx as usize] = entry as i32;
+        }
+    }
+    // Fill memory with path entries
     module.datas.push(wasabi_wasm::Data {
-        init: vec![1; pre_instrumentation_function_indices.capacity()],
+        init: path_entries
+            .into_iter()
+            .flat_map(i32::to_le_bytes)
+            .collect(),
         mode: wasabi_wasm::DataMode::Active {
-            memory: Idx::<Memory>::from(flag_memory_index),
+            memory: path_memory_index.into(),
             offset: vec![Const(Val::I32(0)), End],
         },
     });
 
     // Fix data count
     module.data_count = Some(module.datas.len() as u32);
-    */
+
     // 2. Generate function instrumentation functionality
     let apply_table_index = module.tables.len();
     let mut apply_table_funs = vec![];
@@ -205,8 +237,33 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             Instr::If(FunctionType::new(&[], target_function_type.results())),
         ]);
         // THEN
-        instrumented_body.extend(push_args_on_stack.clone());
-        instrumented_body.push(Instr::Call(*uninstrumented_function_index));
+
+        // if path entry check counter
+        if let Some(clean_idx) = fast_paths
+            .contains_key(&function_index.to_u32())
+            .then(|| clean_functions_indeces[function_index])
+        {
+            instrumented_body.extend_from_slice(&[
+                Const(Val::I32((function_index.to_u32() * 4) as i32)),
+                Instr::Load(
+                    LoadOp::I32Load,
+                    Memarg::default_with_index(LoadOp::I32Load, counter_memory_index),
+                ), // stack: [entry_counter]
+                Instr::Unary(wasabi_wasm::UnaryOp::I32Eqz),
+                Instr::If(FunctionType::new(&[], target_function_type.results())),
+            ]);
+            // If counter == 0 call the fast path
+            instrumented_body.extend(push_args_on_stack.clone());
+            instrumented_body.push(Instr::Call(clean_idx));
+            instrumented_body.push(Instr::Else);
+            instrumented_body.extend(push_args_on_stack.clone());
+            instrumented_body.push(Instr::Call(*uninstrumented_function_index));
+            instrumented_body.push(End);
+        } else {
+            // call uninstrumented
+            instrumented_body.extend(push_args_on_stack.clone());
+            instrumented_body.push(Instr::Call(*uninstrumented_function_index));
+        }
 
         // ELSE
         instrumented_body.push(Instr::Else);
@@ -288,34 +345,101 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         .export
         .push(wasp_imported_generic_apply_base.name.to_string());
 
-    // Generate 'switch instr'
+    let set_f_instrumentation_body = vec![
+        // SET THE FLAG OF F TO FLAG VALUE
+        Local(LocalOp::Get, 0_usize.into()), // f_idx
+        Local(LocalOp::Get, 1_usize.into()), // flag_value
+        Instr::Store(
+            StoreOp::I32Store8,
+            wasabi_wasm::Memarg::default_with_index(StoreOp::I32Store8, flag_memory_index),
+        ), // Set flag value
+        // FIXME: If new flag value = old flag value => dont change counter value
+
+        // CHECK IF IN PATH
+        Local(LocalOp::Get, 0_usize.into()), // stack: [f_idx]
+        Instr::Const(Val::I32(4)),
+        Instr::Binary(BinaryOp::I32Mul), // stack: [f_idx * 4]
+        Instr::Load(
+            LoadOp::I32Load,
+            Memarg::default_with_index(LoadOp::I32Load, path_memory_index),
+        ), // stack: [possible entry idx or -1]
+        // set entry_idx local and leave on stack
+        Local(LocalOp::Tee, 2_usize.into()),
+        Instr::Const(Val::I32(0)),
+        Instr::Binary(BinaryOp::I32LtS), // if entry_idx < 0
+        // not on path
+        Instr::If(FunctionType::empty()),
+        Instr::Return,                       // Skip nothing else to do
+        Instr::Else,                         // stack: []
+        Local(LocalOp::Get, 2_usize.into()), // stack: [entry_idx]
+        Instr::Const(Val::I32(4)),
+        Instr::Binary(BinaryOp::I32Mul),     // stack: [entry_idx * 4]
+        Local(LocalOp::Tee, 2_usize.into()), // entry_idx * 4 now in the local
+        Local(LocalOp::Get, 2_usize.into()), // stack: [entry_idx * 4, entry_idx * 4]
+        Instr::Load(
+            LoadOp::I32Load,
+            Memarg::default_with_index(LoadOp::I32Load, counter_memory_index),
+        ), // stack: [entry_idx * 4, entry_counter]
+        // If flag == 0 means turn off thus do minus 1 else plus 1
+        Local(LocalOp::Get, 1_usize.into()), // stack: [entry_idx * 4, entry_counter, flag_value]
+        Instr::Unary(UnaryOp::I32Eqz),
+        Instr::If(FunctionType::new(&[], &[ValType::I32])), // if flag == 0, stack: [entry_idx * 4, entry_counter]
+        // Turn off, decrease counter
+        Instr::Const(Val::I32(-1)),
+        Instr::Else,
+        // Turn on, increase counter
+        Instr::Const(Val::I32(1)),
+        End,                             // stack: [entry_idx * 4, entry_counter, 1 or -1]
+        Instr::Binary(BinaryOp::I32Add), // stack: [entry_idx * 4, new_entry_counter]
+        Instr::Store(
+            StoreOp::I32Store,
+            Memarg::default_with_index(StoreOp::I32Store, counter_memory_index),
+        ),
+        End,
+        End, // function end
+    ];
+
+    // Generate 'set_f_instrumentation'
     let set_f_instrumentation = module.add_function(
         wasp_imported_set_f_instrumentation.as_function_type(),
-        vec![],
-        vec![
-            Local(LocalOp::Get, 0_usize.into()), // f_idx
-            Local(LocalOp::Get, 1_usize.into()), // flag_value
-            Instr::Store(
-                StoreOp::I32Store8,
-                wasabi_wasm::Memarg::default_with_index(StoreOp::I32Store8, flag_memory_index),
-            ),
-            End,
-        ],
+        vec![ValType::I32], // entry_idx
+        set_f_instrumentation_body,
     );
+
+    let mut set_instrumentation_body = vec![
+        Instr::Const(Val::I32(0)),                             // memory offset
+        Local(LocalOp::Get, 0_usize.into()),                   // value to fill (arg)
+        Instr::Const(Val::I32(program_function_count as i32)), // number of bytes to fill
+        MemoryFill(flag_memory_index.into()),
+        // RESET COUNTERS
+        // Set counters to 0
+        Instr::Const(Val::I32(0)), // memory offset
+        Instr::Const(Val::I32(0)), // value to fill (arg)
+        Instr::Const(Val::I32(program_function_count as i32 * 4)), // number of bytes to fill
+        MemoryFill(counter_memory_index.into()),
+        Local(LocalOp::Get, 0_usize.into()), // 1 (true) = turn on, 0 (false) not
+        // If turn on
+        Instr::If(FunctionType::empty()),
+        // Push in correct function amount
+    ];
+    // Push in correct function amount
+    for (&entry, path_members) in fast_paths {
+        set_instrumentation_body.extend_from_slice(&[
+            Instr::Const(Val::I32(entry as i32 * 4)), // entry_idx
+            Instr::Const(Val::I32(path_members.len() as i32)), // counter_value
+            Instr::Store(
+                StoreOp::I32Store,
+                Memarg::default_with_index(StoreOp::I32Store, counter_memory_index),
+            ),
+        ]);
+    }
+    set_instrumentation_body.extend_from_slice(&[End, End]); // if end, function end
 
     // Generate 'set_instrumentation'
     let set_instrumentation = module.add_function(
         wasp_imported_set_instrumentation.as_function_type(),
         vec![],
-        vec![
-            Instr::Const(Val::I32(0)),           // memory offset
-            Local(LocalOp::Get, 0_usize.into()), // value to fill (arg)
-            Instr::Const(Val::I32(
-                pre_instrumentation_function_indices.capacity() as i32
-            )), // number of bytes to fill
-            MemoryFill(flag_memory_index.into()),
-            End,
-        ],
+        set_instrumentation_body,
     );
 
     module

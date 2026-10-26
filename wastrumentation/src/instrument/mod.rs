@@ -7,6 +7,8 @@ use wasabi_wasm::ImportOrPresent;
 use wasabi_wasm::Module;
 use wasabi_wasm::ValType;
 
+use call_graph_analysis::compute_paths_from_bytes;
+
 use crate::compiler::{LibGeneratable, Library};
 use wasabi_wasm::Function;
 use wasabi_wasm::Idx;
@@ -45,6 +47,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     analysis_interface: &AnalysisInterface,
     target_indices: &Option<Vec<u32>>,
     start_disabled: bool,
+    path_height: Option<u32>,
 ) -> Result<Instrumented<InstrumentationLanguage>, InstrumentationError> {
     let AnalysisInterface {
         generic_interface,
@@ -145,8 +148,20 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         elem_drop,
     } = analysis_interface;
 
+    let possible_paths = if let Some(k) = path_height {
+        compute_paths_from_bytes(module, k as usize).unwrap_or_else(|_e| HashMap::new())
+    } else {
+        HashMap::new()
+    };
+
+    let all_path_funcs: HashSet<u32> = possible_paths.clone().into_values().flatten().collect();
+
+    // let mut clean_function_indeces = HashMap::new();
+
     let (mut module, _offsets, _issue) =
         Module::from_bytes(module).map_err(InstrumentationError::ParseModuleError)?;
+
+    let program_function_count = module.functions.len();
 
     let target_indices_including_imports: HashSet<Idx<Function>> = module
         .functions()
@@ -186,15 +201,18 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         .collect::<Result<Vec<HighLevelBody>, InstrumentationError>>()?;
 
     let mut uninstrumented_function_indices = HashMap::new();
+    let mut clean_function_indeces = HashMap::new();
 
     // Duplicate the original function bodies to save their state before any transformation
-    for (target_function_idx, target_high_level_body) in target_indices
+    // TODO: If function appears in the "clean" paths, duplicate twice and put in hashmap of idx => clean_idx to change calls later
+    for (&target_function_idx, target_high_level_body) in target_indices
         .iter()
         .zip(target_high_level_functions.clone())
     {
+        // all_path_funcs
         let LowLevelBody(target_low_level_body) = target_high_level_body.into();
         let locals = module
-            .function(*target_function_idx)
+            .function(target_function_idx)
             .code()
             .ok_or(InstrumentationError::AttemptInnerInstrumentImport)?
             .locals
@@ -202,9 +220,29 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
             .iter()
             .map(|l| l.type_)
             .collect::<Vec<ValType>>();
-        let ftype = module.function(*target_function_idx).type_;
-        let uninstrumented_idx = module.add_function(ftype, locals, target_low_level_body.clone());
-        uninstrumented_function_indices.insert(*target_function_idx, uninstrumented_idx);
+        let ftype = module.function(target_function_idx).type_;
+        let uninstrumented_idx =
+            module.add_function(ftype, locals.clone(), target_low_level_body.clone());
+        if all_path_funcs.contains(&target_function_idx.to_u32()) {
+            let clean_idx = module.add_function(ftype, locals, target_low_level_body.clone());
+            clean_function_indeces.insert(target_function_idx, clean_idx);
+        }
+        uninstrumented_function_indices.insert(target_function_idx, uninstrumented_idx);
+    }
+
+    // Loop over the "clean" functions and modify their calls to change direct calls to other clean functions
+    for function_idx in all_path_funcs {
+        if let Some(&clean_idx) = clean_function_indeces.get(&function_idx.into()) {
+            let clean_func = module.function_mut(clean_idx);
+            let code = clean_func.code_mut().unwrap();
+            for instr in code.body.iter_mut() {
+                if let wasabi_wasm::Instr::Call(callee) = instr {
+                    if let Some(&clean_callee) = clean_function_indeces.get(callee) {
+                        *instr = wasabi_wasm::Instr::Call(clean_callee);
+                    }
+                }
+            }
+        }
     }
 
     //  Install all tarps
@@ -396,6 +434,9 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
                 set_f_instrumentation,
                 set_instrumentation,
                 start_disabled,
+                &possible_paths,
+                &clean_function_indeces,
+                program_function_count,
             )
         },
     );

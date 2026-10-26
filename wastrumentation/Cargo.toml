@@ -10,6 +10,7 @@ edition = "2021"
 wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
 wasm-mergers = { git = "https://github.com/aaronmunsters/wasm-mergers", rev = "a4a2753" }
 thiserror = { workspace = true }
+call-graph-analysis = { workspace = true }
 
 [dev-dependencies]
 wasmtime = { workspace = true }

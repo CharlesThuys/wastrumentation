@@ -23,6 +23,7 @@ wastrumentation-lang-webassembly = { path = "./supported-languages/webassembly" 
 wastrumentation-lang-assemblyscript = { path = "./supported-languages/assemblyscript" }
 wastrumentation-rs-stdlib = { path = "./wastrumentation-instr-lib/tests/analyses/rust/wastrumentation-rs-stdlib" }
 wastrumentation-static-analysis = { path = "./wastrumentation-static-analysis" }
+call-graph-analysis = { path = "./call-graph-analysis" }
 
 wasmtime = "37.0"
 indoc = "2"

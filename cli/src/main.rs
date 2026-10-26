@@ -26,13 +26,17 @@ struct Args {
     #[arg(long, num_args = 1..)]
     hooks: Option<Vec<Hook>>,
 
-    // Target functions of interest
+    /// Target functions of interest
     #[arg(long, required = false, num_args = 1..)]
     targets: Option<Vec<u32>>,
 
-    // Start with the instrumentation disabled
-    #[arg(short, long)]
+    /// Start with the instrumentation disabled
+    #[arg(long)]
     start_disabled: bool,
+
+    /// Give the height of fast paths
+    #[arg(long, required = false)]
+    path_height: Option<u32>,
 
     /// Output path for the instrumented module
     #[arg(short, long)]
@@ -136,6 +140,7 @@ fn main() -> anyhow::Result<()> {
         hooks,
         targets,
         start_disabled,
+        path_height,
     } = Args::parse();
 
     let mut wasm_module = Vec::new();
@@ -161,6 +166,7 @@ fn main() -> anyhow::Result<()> {
         target_indices: targets,
         primary_selection: None,
         start_disabled,
+        path_height,
     };
 
     let instrumented_wasm_module = Wastrumenter::new(

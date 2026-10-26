@@ -32,6 +32,7 @@ fn test_analysis() {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Target),
         start_disabled: false,
+        path_height: None,
     };
 
     // compile wat to wasm

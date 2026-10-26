@@ -244,6 +244,7 @@ fn report_memoization_benches_for(
         target_indices: Some(immutable_set.iter().copied().collect()),
         primary_selection: Some(PrimaryTarget::Analysis),
         start_disabled: false,
+        path_height: None,
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
@@ -305,6 +306,7 @@ fn report_memoization_benches_for(
         target_indices: Some(pure_functions_of_interest.clone()),
         primary_selection: Some(PrimaryTarget::Analysis),
         start_disabled: false,
+        path_height: None,
     };
 
     let wastrumented = wastrumenter

@@ -125,6 +125,7 @@ fn test_analysis_denan() {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Analysis),
         start_disabled: false,
+        path_height: None,
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
@@ -199,6 +200,7 @@ fn test_analysis_forward_guiicons() {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Target),
         start_disabled: false,
+        path_height: None,
     };
 
     // Read input program
@@ -249,6 +251,7 @@ fn test_analysis_safe_heap() {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Analysis),
         start_disabled: false,
+        path_height: None,
     };
 
     let input_program = SOURCE.to_input_program();
@@ -372,6 +375,7 @@ fn test_analysis_memory_introspection() {
         // must target the input program!
         primary_selection: Some(PrimaryTarget::Target),
         start_disabled: false,
+        path_height: None,
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());
@@ -453,6 +457,7 @@ fn test_analysis_forward_pacalc() {
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Target),
         start_disabled: false,
+        path_height: None,
     };
 
     // Read input program

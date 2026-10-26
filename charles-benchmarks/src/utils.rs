@@ -217,6 +217,7 @@ pub fn instrument(input_program: &[u8], analysis: &str, disable: bool) -> Result
         target_indices: None,
         primary_selection: Some(PrimaryTarget::Analysis),
         start_disabled: disable,
+        path_height: None,
     };
 
     let wastrumenter = Wastrumenter::new(instrumentation_compiler.into(), analysis_compiler.into());

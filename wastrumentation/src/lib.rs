@@ -42,6 +42,7 @@ pub struct Configuration {
     pub target_indices: Option<Vec<u32>>,
     pub primary_selection: Option<PrimaryTarget>,
     pub start_disabled: bool,
+    pub path_height: Option<u32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -93,6 +94,7 @@ where
             target_indices,
             primary_selection,
             start_disabled,
+            path_height,
         } = configuration;
         // 1. Compile analysis
         let ProcessedAnalysis {
@@ -114,6 +116,7 @@ where
             &analysis_interface,
             target_indices,
             *start_disabled,
+            *path_height,
         )
         .map_err(Error::InstrumentationError)?;
         // 3. Compile the instrumentation lib
