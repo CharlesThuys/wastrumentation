@@ -1,12 +1,14 @@
 mod utils;
 use utils::*;
 
+use call_graph_analysis::{call_graph, graph_algo};
+
 use chrono::Utc;
 use std::{fs, io};
 
 const RUNS: usize = 1;
 const RESULT_DIR: &str = "results/";
-const BENCH_NAME: &str = "desktop-linux";
+const BENCH_NAME: &str = "mac-soft";
 
 fn main() -> io::Result<()> {
     let programs = load_programs()?;
@@ -27,6 +29,11 @@ fn main() -> io::Result<()> {
         // The complete WASM program as raw bytes.
         let program: Vec<u8> = fs::read(&program_path)?;
         let program_name = program_path.file_stem().unwrap().to_str().unwrap();
+        let program_graph = call_graph::CallGraph::from_bytes(&program).unwrap();
+        let dominations = program_graph.get_dominators();
+        let dominations_height =
+            graph_algo::height_for_dominator_tree(&dominations, program_graph.virtual_root);
+        let _max_height = *dominations_height.get(&program_graph.virtual_root).unwrap() as u32 - 1;
 
         // Uninstrumented program_size
         println!("Benchmarking {} ({} bytes)", program_name, program.len());
@@ -35,6 +42,7 @@ fn main() -> io::Result<()> {
             program_name: program_name.to_string(),
             instrumentation: "uninstrumented".to_string(),
             analysis_name: "".to_string(),
+            path_height: 0,
             error: "".to_string(),
         })?;
         size_wtr.flush()?;
@@ -48,6 +56,7 @@ fn main() -> io::Result<()> {
                     "",
                     "uninstrumented",
                     run as u32,
+                    0,
                 );
                 wtr.serialize(result)?;
                 wtr.flush()?;
@@ -58,67 +67,73 @@ fn main() -> io::Result<()> {
             let analysis_name = analysis_path.file_stem().unwrap().to_str().unwrap();
             let mut instrumented = vec![];
 
-            // Instrumented Program Size
-            match instrument(&program, analysis_name, false) {
-                Ok(wastrumented) => {
-                    instrumented = wastrumented;
-                    println!(
-                        "Instrumented {} with {} ({} bytes)",
-                        program_name,
-                        analysis_name,
-                        instrumented.len()
-                    );
-                    size_wtr.serialize(SizeResult {
-                        bytes: instrumented.len() as u32,
-                        program_name: program_name.to_string(),
-                        instrumentation: "instrumented".to_string(),
-                        analysis_name: analysis_name.to_string(),
-                        error: "".to_string(),
-                    })?;
+            for h in 0..2 {
+                // Instrumented Program Size
+                match instrument(&program, analysis_name, false, h) {
+                    Ok(wastrumented) => {
+                        instrumented = wastrumented;
+                        println!(
+                            "Instrumented {} with {} ({} bytes)",
+                            program_name,
+                            analysis_name,
+                            instrumented.len()
+                        );
+                        size_wtr.serialize(SizeResult {
+                            bytes: instrumented.len() as u32,
+                            program_name: program_name.to_string(),
+                            instrumentation: "instrumented".to_string(),
+                            analysis_name: analysis_name.to_string(),
+                            path_height: h,
+                            error: "".to_string(),
+                        })?;
+                    }
+                    Err(err) => {
+                        size_wtr.serialize(SizeResult {
+                            bytes: instrumented.len() as u32,
+                            program_name: program_name.to_string(),
+                            instrumentation: "instrumented".to_string(),
+                            analysis_name: analysis_name.to_string(),
+                            path_height: h,
+                            error: err.to_string(),
+                        })?;
+                        continue;
+                    }
                 }
-                Err(err) => {
-                    size_wtr.serialize(SizeResult {
-                        bytes: instrumented.len() as u32,
-                        program_name: program_name.to_string(),
-                        instrumentation: "instrumented".to_string(),
-                        analysis_name: analysis_name.to_string(),
-                        error: err.to_string(),
-                    })?;
-                    continue;
+                size_wtr.flush()?;
+
+                let disabled = instrument(&program, analysis_name, true, h).unwrap();
+
+                for platform in platforms {
+                    for run in 0..RUNS {
+                        let result = run_bench(
+                            platform,
+                            program_name,
+                            &instrumented,
+                            analysis_name,
+                            "enabled",
+                            run as u32,
+                            h,
+                        );
+                        wtr.serialize(result)?;
+                        wtr.flush()?;
+                    }
+                    for run in 0..RUNS {
+                        let result = run_bench(
+                            platform,
+                            program_name,
+                            &disabled,
+                            analysis_name,
+                            "disabled",
+                            run as u32,
+                            h,
+                        );
+                        wtr.serialize(result)?;
+                        wtr.flush()?;
+                    }
                 }
+
+                wtr.flush()?;
             }
-            size_wtr.flush()?;
-
-            let disabled = instrument(&program, analysis_name, true).unwrap();
-
-            for platform in platforms {
-                for run in 0..RUNS {
-                    let result = run_bench(
-                        platform,
-                        program_name,
-                        &instrumented,
-                        analysis_name,
-                        "enabled",
-                        run as u32,
-                    );
-                    wtr.serialize(result)?;
-                    wtr.flush()?;
-                }
-                for run in 0..RUNS {
-                    let result = run_bench(
-                        platform,
-                        program_name,
-                        &disabled,
-                        analysis_name,
-                        "disabled",
-                        run as u32,
-                    );
-                    wtr.serialize(result)?;
-                    wtr.flush()?;
-                }
-            }
-
-            wtr.flush()?;
         }
     }
     Ok(())

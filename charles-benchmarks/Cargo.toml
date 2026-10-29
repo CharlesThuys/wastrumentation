@@ -13,6 +13,7 @@ wastrumentation = { workspace = true }
 wastrumentation-lang-assemblyscript = { workspace = true }
 wastrumentation-lang-rust = { workspace = true }
 wastrumentation-lang-webassembly = { workspace = true }
+call-graph-analysis = { workspace = true }
 chrono = "0.4.45"
 
 wasp-compiler = { workspace = true }
@@ -27,3 +28,4 @@ wasmtime-wasi = "47.0"
 wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
 wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
 anyhow = "1.0.104"
+wasmer = "7.5.0"

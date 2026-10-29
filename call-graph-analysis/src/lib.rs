@@ -1,15 +1,15 @@
-mod call_graph;
-mod graph_algo;
+pub mod call_graph;
+pub mod graph_algo;
 
 use call_graph::CallGraph;
-use graph_algo::{height_for_graph, reachable_from_node};
+use graph_algo::{height_for_dominator_tree, height_for_graph, reachable_from_node};
 use petgraph::algo::dominators::Dominators;
 use petgraph::graph::NodeIndex;
 use std::collections::HashMap;
 
 pub fn compute_paths_from_bytes(bytes: &[u8], k: usize) -> anyhow::Result<HashMap<u32, Vec<u32>>> {
     let call_graph = CallGraph::from_bytes(bytes)?;
-    let paths = compute_paths_for_height(&call_graph, k);
+    let paths = compute_paths_for_height_in_dom_tree(&call_graph, k);
     let mut result = HashMap::new();
     for (node, path_nodes) in paths.into_iter() {
         if let Some(&f_idx) = call_graph.node_map.get_by_right(&node) {
@@ -31,7 +31,7 @@ pub fn compute_paths_from_file(
     k: usize,
 ) -> anyhow::Result<HashMap<u32, Vec<u32>>> {
     let call_graph = CallGraph::from_file(wasm_path)?;
-    let paths = compute_paths_for_height(&call_graph, k);
+    let paths = compute_paths_for_height_in_dom_tree(&call_graph, k);
     let mut result = HashMap::new();
     for (node, path_nodes) in paths.into_iter() {
         if let Some(&f_idx) = call_graph.node_map.get_by_right(&node) {
@@ -48,6 +48,29 @@ pub fn compute_paths_from_file(
     Ok(result)
 }
 
+// Returns nodes at height that dominate all callees
+// TODO: Make it such that the path entries at a height are at a height in the dominator tree instead of call graph
+fn compute_paths_for_height_in_dom_tree(
+    call_graph: &CallGraph,
+    k: usize,
+) -> HashMap<NodeIndex, Vec<NodeIndex>> {
+    let heights = height_for_dominator_tree(&call_graph.get_dominators(), call_graph.virtual_root);
+    let dom_tree = call_graph.get_dominators();
+
+    heights
+        .iter()
+        .filter(|&(&node, &height)| height == k && node != call_graph.virtual_root)
+        .filter_map(|(&start, _)| {
+            let path = reachable_from_node(call_graph, start);
+            let valid = path
+                .iter()
+                .all(|&check| is_dominated_by_node(&dom_tree, start, check));
+            valid.then_some((start, path))
+        })
+        .collect()
+}
+
+#[allow(dead_code)]
 // Returns nodes at height that dominate all callees
 fn compute_paths_for_height(
     call_graph: &CallGraph,

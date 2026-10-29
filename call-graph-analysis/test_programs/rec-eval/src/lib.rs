@@ -2,6 +2,7 @@
 #![allow(clippy::all)]
 #[unsafe(no_mangle)]
 pub extern "C" fn evaluate_expression(code: u32) -> i32 {
+    println!("evaluated {}", code);
     let ast_node = parse_ast(code);
     eval_node(&ast_node, 0)
 }

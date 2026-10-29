@@ -71,26 +71,30 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     let required_pages_u32 = program_function_count.div_ceil(65536 * 4) as u32;
 
     // Create new memory for flags
-    let flag_memory = Memory::new(Limits {
+    let mut flag_memory = Memory::new(Limits {
         initial_size: required_pages_bytes,
         max_size: None,
     });
+    flag_memory.export("flag_memory".to_string());
+    // flag_memory.export("_flag_memory");
     let flag_memory_index = module.memories.len() as u32;
     module.memories.push(flag_memory);
 
     // Create new memory for counters
-    let counter_memory = Memory::new(Limits {
+    let mut counter_memory = Memory::new(Limits {
         initial_size: required_pages_u32,
         max_size: None,
     });
+    counter_memory.export("counter_memory".to_string());
     let counter_memory_index = module.memories.len() as u32;
     module.memories.push(counter_memory);
 
     // Create new memory for path entrances
-    let path_memory = Memory::new(Limits {
+    let mut path_memory = Memory::new(Limits {
         initial_size: required_pages_u32,
         max_size: None,
     });
+    path_memory.export("path_memory".to_string());
     let path_memory_index = module.memories.len() as u32;
     module.memories.push(path_memory);
 
@@ -346,15 +350,24 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
         .push(wasp_imported_generic_apply_base.name.to_string());
 
     let set_f_instrumentation_body = vec![
-        // SET THE FLAG OF F TO FLAG VALUE
+        // Check old flag value
         Local(LocalOp::Get, 0_usize.into()), // f_idx
-        Local(LocalOp::Get, 1_usize.into()), // flag_value
+        Instr::Load(
+            LoadOp::I32Load8U,
+            Memarg::default_with_index(LoadOp::I32Load8U, flag_memory_index),
+        ), // stack: old_flag_value
+        Local(LocalOp::Get, 1_usize.into()), // stack: [old_flag_value, new_flag_value]
+        Instr::Binary(BinaryOp::I32Eq),
+        Instr::If(FunctionType::empty()), // If old flag = new flag, return we dont want to change counters
+        Instr::Return,
+        End,
+        // Set flag to new value
+        Local(LocalOp::Get, 0_usize.into()), // f_idx
+        Local(LocalOp::Get, 1_usize.into()), // new_flag_value
         Instr::Store(
             StoreOp::I32Store8,
             wasabi_wasm::Memarg::default_with_index(StoreOp::I32Store8, flag_memory_index),
         ), // Set flag value
-        // FIXME: If new flag value = old flag value => dont change counter value
-
         // CHECK IF IN PATH
         Local(LocalOp::Get, 0_usize.into()), // stack: [f_idx]
         Instr::Const(Val::I32(4)),
@@ -402,7 +415,7 @@ pub fn instrument<InstrumentationLanguage: LibGeneratable>(
     // Generate 'set_f_instrumentation'
     let set_f_instrumentation = module.add_function(
         wasp_imported_set_f_instrumentation.as_function_type(),
-        vec![ValType::I32], // entry_idx
+        vec![ValType::I32, ValType::I32], // entry_idx, old_flag_value
         set_f_instrumentation_body,
     );
 

@@ -13,7 +13,7 @@ use wastrumentation_lang_rust::generate::analysis::Hook;
 use wastrumentation_lang_rust::generate::analysis::RustAnalysisSpec;
 
 // Wasmtime imports
-use wasmtime::{Config, Engine, Linker, Module, Store};
+use wasmtime::{Config, Engine, Extern, Linker, Module, Store};
 use wasmtime_wasi::p1::{self as preview1, WasiP1Ctx};
 use wasmtime_wasi::WasiCtxBuilder;
 
@@ -21,6 +21,18 @@ use wasmtime_wasi::WasiCtxBuilder;
 mod wasmtime_macros;
 
 use wat::parse_str as wat2wasm;
+
+fn read_i32<T: wasmtime::AsContext>(memory: &wasmtime::Memory, store: &T, address: usize) -> i32 {
+    let mut bytes = [0u8; 4];
+    memory.read(store, address, &mut bytes).unwrap();
+    i32::from_le_bytes(bytes)
+}
+
+fn read_u8<T: wasmtime::AsContext>(memory: &wasmtime::Memory, store: &T, address: usize) -> u8 {
+    let mut bytes = [0u8];
+    memory.read(store, address, &mut bytes).unwrap();
+    u8::from_le_bytes(bytes)
+}
 
 #[test]
 fn test_check_functions_modified() {
@@ -40,8 +52,7 @@ fn test_check_functions_modified() {
     let instrumentation_compiler =
         ASCompiler::setup_compiler().expect("Setup AssemblyScript compiler");
 
-    const PATH_INPUT_ANLYSIS: &str =
-        "./tests/analyses/rust/function-toggle/count-apply-hooks/Cargo.toml";
+    const PATH_INPUT_ANLYSIS: &str = "./tests/analyses/rust/forward/Cargo.toml";
     let source = Manifest(WasiSupport::Enabled, absolute(PATH_INPUT_ANLYSIS).unwrap());
     let hooks = vec![Hook::GenericApply].into_iter().collect();
     let analysis = RustAnalysisSpec { source, hooks }.into();
@@ -57,6 +68,8 @@ fn test_check_functions_modified() {
     let wastrumented = wastrumenter
         .wastrument(&input_program, analysis, &configuration)
         .expect("Wastrumentation should succeed");
+
+    // std::fs::write("debug.wasm", &wastrumented).unwrap();
 
     /////////////////////
     // WASMTIME ENGINE //
@@ -92,9 +105,97 @@ fn test_check_functions_modified() {
 
     declare_fns_from_linker! { linker, store, "main",
         a [] [],
+        set_f_instrumentation [i32, i32] [],
     };
 
-    // Test caller enabled and callee disabled
+    let counter_memory = match linker.get(&mut store, "main", "counter_memory") {
+        Some(Extern::Memory(memory)) => memory,
+        _ => panic!("Could not find exported lookup memory"),
+    };
+    let entry_memory = match linker.get(&mut store, "main", "path_memory") {
+        Some(Extern::Memory(memory)) => memory,
+        _ => panic!("Could not find exported lookup memory"),
+    };
+    let flag_memory = match linker.get(&mut store, "main", "flag_memory") {
+        Some(Extern::Memory(memory)) => memory,
+        _ => panic!("Could not find exported lookup memory"),
+    };
+
+    let initial_value = read_i32(&counter_memory, &store, 2);
+    println!("Lookup entry 2 before call: {initial_value}");
+
+    // Test caller enabled and callee disabled.
     wasm_call! {store, a};
-    // assert_eq!((wasm_call!(store, f)), 45);
+
+    // Inspect it again after execution.
+
+    let final_value = read_i32(&counter_memory, &store, 2);
+    println!("Lookup entry 2 after call: {final_value}");
+
+    // The lookup table should be immutable at runtime.
+    assert_eq!(initial_value, final_value);
+
+    for i in 0..5 {
+        let value = read_i32(&counter_memory, &store, i * 4);
+        let entry = read_i32(&entry_memory, &store, i * 4);
+        let flag = read_u8(&flag_memory, &store, i);
+        println!(
+            "{i} ({}): counter {value}, entry {entry}",
+            if flag == 1 { "on" } else { "off" }
+        );
+        if i == 2 {
+            assert_eq!(value, 3);
+        } else {
+            assert_eq!(value, 0);
+        }
+        assert_eq!(flag, 1);
+    }
+
+    wasm_call! {store, set_f_instrumentation, 3, 0};
+
+    println!("==== turn off func idx 3");
+
+    for i in 0..5 {
+        let value = read_i32(&counter_memory, &store, i * 4);
+        let entry = read_i32(&entry_memory, &store, i * 4);
+        let flag = read_u8(&flag_memory, &store, i);
+        println!(
+            "{i} ({}): counter {value}, entry {entry}",
+            if flag == 1 { "on" } else { "off" }
+        );
+        if i == 2 {
+            assert_eq!(value, 2);
+        } else {
+            assert_eq!(value, 0);
+        }
+        if i == 3 {
+            assert_eq!(flag, 0);
+        } else {
+            assert_eq!(flag, 1);
+        }
+    }
+
+    wasm_call! {store, set_f_instrumentation, 3, 0};
+
+    println!("==== turn off func idx 3 again");
+
+    for i in 0..5 {
+        let value = read_i32(&counter_memory, &store, i * 4);
+        let entry = read_i32(&entry_memory, &store, i * 4);
+        let flag = read_u8(&flag_memory, &store, i);
+        println!(
+            "{i} ({}): counter {value}, entry {entry}",
+            if flag == 1 { "on" } else { "off" }
+        );
+        if i == 2 {
+            assert_eq!(value, 2);
+        } else {
+            assert_eq!(value, 0);
+        }
+        if i == 3 {
+            assert_eq!(flag, 0);
+        } else {
+            assert_eq!(flag, 1);
+        }
+    }
 }

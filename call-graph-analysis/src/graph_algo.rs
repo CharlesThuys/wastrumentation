@@ -1,5 +1,6 @@
 use crate::call_graph::{CallGraph, CallType};
 use petgraph::Direction;
+use petgraph::algo::dominators::Dominators;
 use petgraph::graph::DiGraph;
 use petgraph::graph::NodeIndex;
 use std::collections::HashMap;
@@ -22,6 +23,28 @@ pub fn reachable_from_node(call_graph: &CallGraph, from: NodeIndex) -> Vec<NodeI
         }
     }
     result
+}
+
+pub fn height_for_dominator_tree(
+    dominations: &Dominators<NodeIndex>,
+    root: NodeIndex,
+) -> HashMap<NodeIndex, usize> {
+    let mut heights = HashMap::new();
+    height_for_dom_node(dominations, root, &mut heights);
+    heights
+}
+
+fn height_for_dom_node(
+    dominations: &Dominators<NodeIndex>,
+    node: NodeIndex,
+    heights: &mut HashMap<NodeIndex, usize>,
+) -> i32 {
+    let mut height = 0;
+    for child in dominations.immediately_dominated_by(node) {
+        height = height.max(height_for_dom_node(dominations, child, heights) + 1);
+    }
+    heights.insert(node, height as usize);
+    height
 }
 
 pub fn height_for_graph(call_graph: &CallGraph) -> HashMap<NodeIndex, usize> {

@@ -7,7 +7,7 @@ use petgraph::{
 };
 use std::{collections::HashSet, fs, io::Write, process::Command};
 use tempfile::{Builder, NamedTempFile};
-use wasmparser::{ExternalKind, Parser, Payload};
+use wasmparser::{ExternalKind, Import, ImportItemCompact, Imports, Parser, Payload, TypeRef};
 
 #[derive(Debug)]
 pub enum CallType {
@@ -21,6 +21,7 @@ pub struct CallGraph {
     pub node_map: BiHashMap<u32, NodeIndex>,
     pub entry_points: Vec<u32>,
     pub virtual_root: NodeIndex,
+    pub imported: u32,
 }
 
 impl CallGraph {
@@ -28,12 +29,15 @@ impl CallGraph {
         let adj_list = get_adjlist_wassail(path)?;
         let wasm_bytes = fs::read(path)?;
         let entry_points = get_entry_points(&wasm_bytes);
-        let (graph, node_map, virtual_root) = build_graph_from_wassail(adj_list, &entry_points);
+        let imported = get_imports(&wasm_bytes);
+        let (graph, node_map, virtual_root) =
+            build_graph_from_wassail(adj_list, &entry_points, imported);
         Ok(CallGraph {
             graph,
             node_map,
             entry_points,
             virtual_root,
+            imported,
         })
     }
 
@@ -48,18 +52,61 @@ impl CallGraph {
         let path = input_file.path().to_str().expect("Invalid temp path");
         let adj_list = get_adjlist_wassail(path)?;
         let entry_points = get_entry_points(wasm_bytes);
-        let (graph, node_map, virtual_root) = build_graph_from_wassail(adj_list, &entry_points);
+        let imported = get_imports(wasm_bytes);
+        let (graph, node_map, virtual_root) =
+            build_graph_from_wassail(adj_list, &entry_points, imported);
         Ok(CallGraph {
             graph,
             node_map,
             entry_points,
             virtual_root,
+            imported,
         })
     }
 
     pub fn get_dominators(&self) -> dominators::Dominators<NodeIndex> {
         dominators::simple_fast(&self.graph, self.virtual_root)
     }
+}
+
+fn get_imports(wasm_bytes: &[u8]) -> u32 {
+    let mut import_count = 0;
+    for payload in Parser::new(0).parse_all(wasm_bytes) {
+        if let Ok(Payload::ImportSection(reader)) = payload {
+            for imports in reader.into_iter().flatten() {
+                match imports {
+                    Imports::Single(
+                        _,
+                        Import {
+                            module: _,
+                            name: _,
+                            ty: TypeRef::Func(_),
+                        },
+                    ) => import_count += 1,
+                    Imports::Compact1 { module: _, items } => {
+                        for item in items.into_iter().flatten() {
+                            if let ImportItemCompact {
+                                name: _,
+                                ty: TypeRef::Func(_),
+                            } = item
+                            {
+                                import_count += 1;
+                            }
+                        }
+                    }
+                    Imports::Compact2 {
+                        module: _,
+                        ty: TypeRef::Func(_),
+                        names,
+                    } => {
+                        import_count += names.into_iter().flatten().count() as u32;
+                    }
+                    _ => (),
+                }
+            }
+        }
+    }
+    import_count
 }
 
 fn get_entry_points(wasm_bytes: &[u8]) -> Vec<u32> {
@@ -95,9 +142,12 @@ caller callee direct/indirect
 fn build_graph_from_wassail(
     wassail_output: String,
     entry_points: &Vec<u32>,
+    imported: u32,
 ) -> (DiGraph<u32, CallType>, BiHashMap<u32, NodeIndex>, NodeIndex) {
     let mut graph = DiGraph::<u32, CallType>::new();
     let mut node_map: BiHashMap<u32, NodeIndex> = BiHashMap::new();
+
+    let virtual_root = graph.add_node(u32::MAX);
 
     for line in wassail_output.lines() {
         // line looks like: caller callee direct/indirect
@@ -129,12 +179,22 @@ fn build_graph_from_wassail(
         graph.add_edge(caller_node, callee_node, call_type);
     }
 
-    let virtual_root = graph.add_node(u32::MAX);
     for entry_point in entry_points {
         if node_map.contains_left(entry_point) {
             graph.add_edge(
                 virtual_root,
                 *node_map.get_by_left(entry_point).unwrap(),
+                CallType::Direct,
+            );
+        }
+    }
+
+    // Add call from import to virtual root as the imported function may re enter the binary
+    for import_func_idx in 0..imported {
+        if node_map.contains_left(&import_func_idx) {
+            graph.add_edge(
+                *node_map.get_by_left(&import_func_idx).unwrap(),
+                virtual_root,
                 CallType::Direct,
             );
         }
@@ -155,4 +215,13 @@ fn get_adjlist_wassail(wasm_path: &str) -> Result<String> {
 
     let adjlist_text = fs::read_to_string(temp_path)?;
     Ok(adjlist_text)
+}
+
+#[test]
+fn check_imported() {
+    let path =
+        "/Users/charles/Documents/wastrumentation/random_wasm_program_test/chain_call_wrong.wasm";
+    let wasm_bytes = fs::read(path).unwrap();
+    let import_count = get_imports(&wasm_bytes);
+    assert_eq!(import_count, 95);
 }
