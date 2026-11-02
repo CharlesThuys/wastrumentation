@@ -140,7 +140,7 @@ pub fn run_bench(
     run: u32,
     path_height: u32,
 ) -> BenchmarkResult {
-    let result = match platform {
+    let result: Result<Duration> = match platform {
         "wizard" => execute_on_wizard(program),
         "wasmtime" => execute_on_wasmtime(program),
         "wasmer" => execute_on_wasmer(program),
