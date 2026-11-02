@@ -18,6 +18,6 @@ serde_json = { workspace = true }
 wat = { workspace = true }
 wasmtime-wasi = "37.0"
 wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
-wastrumentation-static-analysis = { workspace = true }
+wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
 wastrumentation-lang-rust = { workspace = true }
 wastrumentation-lang-assemblyscript = { workspace = true }
