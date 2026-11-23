@@ -1,0 +1,2 @@
+functions,imports,call_edges,entry_points,leaves,call_graph_depth,dominator_depth,dominator_height,flatness,sharing,median_body_size
+5723,0,185851,64,0.37923802866130724,12,9,9,0.7911569381335197,0.8217406501223349,348

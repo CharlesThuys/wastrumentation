@@ -1,5 +1,6 @@
 pub mod call_graph;
 pub mod graph_algo;
+pub mod metrics;
 
 use call_graph::CallGraph;
 use graph_algo::{height_for_dominator_tree, height_for_graph, reachable_from_node};
@@ -49,13 +50,12 @@ pub fn compute_paths_from_file(
 }
 
 // Returns nodes at height that dominate all callees
-// TODO: Make it such that the path entries at a height are at a height in the dominator tree instead of call graph
 fn compute_paths_for_height_in_dom_tree(
     call_graph: &CallGraph,
     k: usize,
 ) -> HashMap<NodeIndex, Vec<NodeIndex>> {
-    let heights = height_for_dominator_tree(&call_graph.get_dominators(), call_graph.virtual_root);
-    let dom_tree = call_graph.get_dominators();
+    let dom_tree = call_graph.get_dominators(None);
+    let heights = height_for_dominator_tree(&dom_tree, call_graph.virtual_root);
 
     heights
         .iter()
@@ -77,7 +77,7 @@ fn compute_paths_for_height(
     k: usize,
 ) -> HashMap<NodeIndex, Vec<NodeIndex>> {
     let heights = height_for_graph(call_graph);
-    let dom_tree = call_graph.get_dominators();
+    let dom_tree = call_graph.get_dominators(None);
 
     heights
         .iter()
@@ -147,7 +147,7 @@ mod tests {
         let wasm_path = "./fib.wasm";
         let call_graph = call_graph::CallGraph::from_file(wasm_path).unwrap();
         let entry_points = call_graph.entry_points.clone();
-        let dom_tree = call_graph.get_dominators();
+        let dom_tree = call_graph.get_dominators(None);
         print_direct_dominators(&call_graph, dom_tree);
         println!("Entry poimts: {:?}", entry_points);
         let heights = height_for_graph(&call_graph);
@@ -165,7 +165,7 @@ mod tests {
         let wasm_path = "./test_programs/rec_eval.wasm";
         let call_graph = call_graph::CallGraph::from_file(wasm_path).unwrap();
         let entry_points = call_graph.entry_points.clone();
-        let dom_tree = call_graph.get_dominators();
+        let dom_tree = call_graph.get_dominators(None);
         print_direct_dominators(&call_graph, dom_tree);
         println!("Entry points: {:?}", entry_points);
         let heights = height_for_graph(&call_graph);
@@ -187,7 +187,7 @@ mod tests {
         let wasm_path = "./test_programs/data_pipeline.wasm";
         let call_graph = call_graph::CallGraph::from_file(wasm_path).unwrap();
         let entry_points = call_graph.entry_points.clone();
-        let dom_tree = call_graph.get_dominators();
+        let dom_tree = call_graph.get_dominators(None);
         print_direct_dominators(&call_graph, dom_tree);
         println!("Entry poimts: {:?}", entry_points);
         let heights = height_for_graph(&call_graph);
@@ -205,7 +205,7 @@ mod tests {
         let wasm_path = "./test_programs/state_machine.wasm";
         let call_graph = call_graph::CallGraph::from_file(wasm_path).unwrap();
         let entry_points = call_graph.entry_points.clone();
-        let dom_tree = call_graph.get_dominators();
+        let dom_tree = call_graph.get_dominators(None);
         print_direct_dominators(&call_graph, dom_tree);
         println!("Entry poimts: {:?}", entry_points);
         let heights = height_for_graph(&call_graph);
@@ -234,7 +234,7 @@ mod tests {
 
         let wasm_bytes = wat2wasm(wasm_program_text).unwrap();
         let call_graph = call_graph::CallGraph::from_bytes(&wasm_bytes).unwrap();
-        let dom_tree = call_graph.get_dominators();
+        let dom_tree = call_graph.get_dominators(None);
 
         for dom in dom_tree.immediately_dominated_by(*call_graph.node_map.get_by_left(&3).unwrap())
         {
@@ -262,7 +262,7 @@ mod tests {
 
         let wasm_bytes = wat2wasm(wasm_program_text).unwrap();
         let call_graph = call_graph::CallGraph::from_bytes(&wasm_bytes).unwrap();
-        let dom_tree = call_graph.get_dominators();
+        let dom_tree = call_graph.get_dominators(None);
         print_direct_dominators(&call_graph, dom_tree);
     }
 

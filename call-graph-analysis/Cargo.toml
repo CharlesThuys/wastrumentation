@@ -10,28 +10,8 @@ anyhow = "1.0.104"
 petgraph = "0.8.3"
 wasmparser = "0.256.0"
 wat = { workspace = true }
-
-# csv = "1.4.0"
-# serde.workspace = true
-# wasmtime = "47.0"
-#
-# rust-to-wasm-compiler = { workspace = true }
-# wastrumentation = { workspace = true }
-# wastrumentation-lang-assemblyscript = { workspace = true }
-# wastrumentation-lang-rust = { workspace = true }
-# chrono = "0.4.45"
-#
-# wasp-compiler = { workspace = true }
-# tempfile = { workspace = true }
-# bitmask = "0.5.0"
-# indoc = { workspace = true }
-# asc-compiler-rs = { workspace = true }
-# rayon = { workspace = true }
-# serde_json = { workspace = true }
-#
-# wasmtime-wasi = "47.0"
-# wastrumentation-static-analysis = { path = "../wastrumentation-static-analysis" }
-wasabi_wasm = { git = "https://github.com/CharlesThuys/wasabi.git", branch = "multi-memory" }
 bimap = "0.6.3"
-queue = "0.3.1"
-#
+clap = { version = "4.5", features = ["derive"] }
+clio = { version = "0.3.5", features = ["clap-parse"] }
+serde = { version = "1.0", features = ["derive"] }
+csv = "1.4.0"

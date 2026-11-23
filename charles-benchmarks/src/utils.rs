@@ -54,7 +54,10 @@ pub struct SizeResult {
     pub error: String,
 }
 
-pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
+pub fn execute_on_wasmtime(
+    engine: &wasmtime::Engine,
+    module: &wasmtime::Module,
+) -> Result<Duration> {
     /*
     let mut config = Config::new();
     config.wasm_backtrace_max_frames(Some(NonZeroUsize::new(100).unwrap()));
@@ -77,15 +80,9 @@ pub fn execute_on_wasmtime(program: &[u8]) -> Result<Duration> {
     start_function.call(&mut store, ())?;
     Ok(Instant::now() - start_time)*/
 
-    let mut config = Config::default();
-    config.cranelift_opt_level(wasmtime::OptLevel::SpeedAndSize);
-
-    let engine = Engine::new(&config)?;
-    let module = Module::from_binary(&engine, program)?;
-    let mut store = Store::new(&engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).unwrap();
+    let mut store = Store::new(engine, ());
+    let instance = Instance::new(&mut store, module, &[]).unwrap();
     let start_function = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
-
     let start_time = Instant::now();
     start_function.call(&mut store, ())?;
     Ok(start_time.elapsed())
@@ -104,27 +101,13 @@ pub fn execute_on_wizard(program: &[u8]) -> Result<Duration> {
     get_wizard_runtime_from_output(output)
 }
 
-/*
-pub fn execute_on_wasmer_cli(program: &[u8]) -> Result<Duration> {
-    let temp_file = Builder::new().suffix(".wasm").tempfile()?;
-    let temp_path = temp_file.path().to_str().expect("Invalid temp path");
-    fs::write(temp_path, program)?;
-
-    let start_time = Instant::now();
-    Command::new("wasmer")
-        .arg("run")
-        .arg(temp_path)
-        .arg("--enable-multi-memory")
-        .status()?;
-    Ok(start_time.elapsed())
-}*/
-
-pub fn execute_on_wasmer(input_program: &[u8]) -> anyhow::Result<Duration> {
-    let engine = wasmer::Engine::default();
-    let module = wasmer::Module::from_binary(&engine, input_program)?;
-    let mut store = wasmer::Store::new(engine);
+pub fn execute_on_wasmer(
+    engine: &wasmer::Engine,
+    module: &wasmer::Module,
+) -> anyhow::Result<Duration> {
+    let mut store = wasmer::Store::new(engine.clone());
     let imports = wasmer::Imports::new();
-    let instance = wasmer::Instance::new(&mut store, &module, &imports)?;
+    let instance = wasmer::Instance::new(&mut store, module, &imports)?;
     let start = instance.exports.get_function("_start")?;
     let start_time = std::time::Instant::now();
     start.call(&mut store, &[])?;
@@ -137,17 +120,11 @@ pub fn run_bench(
     program: &[u8],
     analysis_name: &str,
     instrumentation: &str,
-    run: u32,
+    runs: u32,
     path_height: u32,
-) -> BenchmarkResult {
-    let result: Result<Duration> = match platform {
-        "wizard" => execute_on_wizard(program),
-        "wasmtime" => execute_on_wasmtime(program),
-        "wasmer" => execute_on_wasmer(program),
-        _ => Err(anyhow!("Unkown execution platform: {}", platform)),
-    };
-
-    match result {
+    writer: &mut csv::Writer<fs::File>,
+) -> Result<()> {
+    let to_result = |result: Result<Duration>, run| match result {
         Ok(success) => BenchmarkResult {
             duration_ms: success.as_millis(),
             duration_ns: success.as_nanos(),
@@ -170,6 +147,40 @@ pub fn run_bench(
             error: err.to_string(),
             platform: platform.to_string(),
         },
+    };
+
+    match platform {
+        "wizard" => {
+            for run in 0..runs {
+                let result = to_result(execute_on_wizard(program), run);
+                writer.serialize(result)?;
+                writer.flush()?;
+            }
+            Ok(())
+        }
+        "wasmtime" => {
+            let mut config = wasmtime::Config::default();
+            config.cranelift_opt_level(wasmtime::OptLevel::SpeedAndSize);
+            let engine = wasmtime::Engine::new(&config)?;
+            let module = Module::from_binary(&engine, program)?;
+            for run in 0..runs {
+                let result = to_result(execute_on_wasmtime(&engine, &module), run);
+                writer.serialize(result)?;
+                writer.flush()?;
+            }
+            Ok(())
+        }
+        "wasmer" => {
+            let engine = wasmer::Engine::default();
+            let module = wasmer::Module::from_binary(&engine, program)?;
+            for run in 0..runs {
+                let result = to_result(execute_on_wasmer(&engine, &module), run);
+                writer.serialize(result)?;
+                writer.flush()?;
+            }
+            Ok(())
+        }
+        _ => Err(anyhow!("Unkown execution platform: {}", platform)),
     }
 }
 
@@ -180,7 +191,7 @@ pub fn load_programs() -> io::Result<Vec<PathBuf>> {
             let p = path.as_ref().unwrap();
             p.is_file()
                 // && PROGRAMS.contains(&p.file_stem().unwrap().to_str().unwrap())
-                && p.file_stem().unwrap().to_str().unwrap() != "boa"
+                && p.file_stem().unwrap().to_str().unwrap() == "guiicons"
                 && p.extension().unwrap() == "wasm"
         })
         .collect::<io::Result<Vec<_>>>()?;

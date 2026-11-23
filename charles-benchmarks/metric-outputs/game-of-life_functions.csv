@@ -1,0 +1,4 @@
+func_idx,is_import,body_size,is_entry_point,reachable,in_edges,out_edges,distinct_callers,distinct_callees,self_recursive,call_graph_depth,idom_is_root,dom_depth,dom_height,dom_children,subtree_size
+0,false,433,true,true,0,1,0,1,false,0,true,0,0,0,1
+2,false,490,true,true,1,1,1,1,false,0,true,0,1,1,2
+1,false,168,false,true,1,0,1,0,false,1,false,1,0,0,1

@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::metrics::get_imports;
 use anyhow::Result;
 use bimap::BiHashMap;
 use petgraph::{
@@ -7,7 +8,7 @@ use petgraph::{
 };
 use std::{collections::HashSet, fs, io::Write, process::Command};
 use tempfile::{Builder, NamedTempFile};
-use wasmparser::{ExternalKind, Import, ImportItemCompact, Imports, Parser, Payload, TypeRef};
+use wasmparser::{ExternalKind, Parser, Payload};
 
 #[derive(Debug)]
 pub enum CallType {
@@ -64,49 +65,9 @@ impl CallGraph {
         })
     }
 
-    pub fn get_dominators(&self) -> dominators::Dominators<NodeIndex> {
-        dominators::simple_fast(&self.graph, self.virtual_root)
+    pub fn get_dominators(&self, root: Option<NodeIndex>) -> dominators::Dominators<NodeIndex> {
+        dominators::simple_fast(&self.graph, root.unwrap_or(self.virtual_root))
     }
-}
-
-fn get_imports(wasm_bytes: &[u8]) -> u32 {
-    let mut import_count = 0;
-    for payload in Parser::new(0).parse_all(wasm_bytes) {
-        if let Ok(Payload::ImportSection(reader)) = payload {
-            for imports in reader.into_iter().flatten() {
-                match imports {
-                    Imports::Single(
-                        _,
-                        Import {
-                            module: _,
-                            name: _,
-                            ty: TypeRef::Func(_),
-                        },
-                    ) => import_count += 1,
-                    Imports::Compact1 { module: _, items } => {
-                        for item in items.into_iter().flatten() {
-                            if let ImportItemCompact {
-                                name: _,
-                                ty: TypeRef::Func(_),
-                            } = item
-                            {
-                                import_count += 1;
-                            }
-                        }
-                    }
-                    Imports::Compact2 {
-                        module: _,
-                        ty: TypeRef::Func(_),
-                        names,
-                    } => {
-                        import_count += names.into_iter().flatten().count() as u32;
-                    }
-                    _ => (),
-                }
-            }
-        }
-    }
-    import_count
 }
 
 fn get_entry_points(wasm_bytes: &[u8]) -> Vec<u32> {
@@ -215,13 +176,4 @@ fn get_adjlist_wassail(wasm_path: &str) -> Result<String> {
 
     let adjlist_text = fs::read_to_string(temp_path)?;
     Ok(adjlist_text)
-}
-
-#[test]
-fn check_imported() {
-    let path =
-        "/Users/charles/Documents/wastrumentation/random_wasm_program_test/chain_call_wrong.wasm";
-    let wasm_bytes = fs::read(path).unwrap();
-    let import_count = get_imports(&wasm_bytes);
-    assert_eq!(import_count, 95);
 }
